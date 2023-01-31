@@ -59,15 +59,16 @@
 
   outputs = {
     self,
+    nixpkgs,
+    # everything else
+    agenix,
+    deploy,
     digga,
-    nixos,
     home,
+    nixos,
     nixos-hardware,
     nur,
-    agenix,
     nvfetcher,
-    deploy,
-    nixpkgs,
     ...
   } @ inputs:
     digga.lib.mkFlake
@@ -78,12 +79,16 @@
 
       channels = {
         nixos = {
+          # TODO(Dave): Do `imports` here actually matter??
           imports = [(digga.lib.importOverlays ./overlays)];
-          overlays = [];
+          overlays = [ ];
         };
         nixpkgs-darwin-stable = {
+          # TODO(Dave): Do `imports` here actually matter??
           imports = [(digga.lib.importOverlays ./overlays)];
           overlays = [
+            # TODO(Dave): Figure out WTF the below does... :thinking_face:
+
             # TODO: restructure overlays directory for per-channel overrides
             # `importOverlays` will import everything under the path given
             (channels: final: prev:
@@ -98,6 +103,7 @@
 
       lib = import ./lib {lib = digga.lib // nixos.lib;};
 
+      # TODO(Dave): Does this even work???
       sharedOverlays = [
         (final: prev: {
           __dontExport = true;
@@ -106,6 +112,7 @@
           });
         })
 
+        # TODO(Dave): Are these needed (or wanted even)?
         nur.overlay
         agenix.overlay
         nvfetcher.overlay
@@ -130,7 +137,7 @@
         imports = [(digga.lib.importHosts ./hosts/nixos)];
         hosts = {
           # set host-specific properties here
-          NixOS = {};
+          lidjamoypi.system = "aarch64-linux";
         };
         importables = rec {
           profiles =
