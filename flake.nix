@@ -130,7 +130,7 @@
         imports = [(digga.lib.importHosts ./hosts/nixos)];
         hosts = {
           # set host-specific properties here
-          NixOS = {};
+          lidjamoypi.system = "aarch64-linux";
         };
         importables = rec {
           profiles =
