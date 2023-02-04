@@ -33,41 +33,43 @@
     # failures on Linux systems.
     nixpkgs-darwin-stable.url = "github:NixOS/nixpkgs/nixpkgs-22.11-darwin";
 
+    agenix.url = "github:ryantm/agenix";
+    agenix.inputs.nixpkgs.follows = "nixos";
+
+    darwin.follows = "digga/darwin";
+    #darwin.inputs.nixpkgs.follows = "nixpkgs-darwin-stable";
+
     digga.url = "github:divnix/digga";
+    #digga.inputs.devshell.inputs.flake-utils.follows = "digga/flake-utils";
     digga.inputs.nixpkgs.follows = "nixos";
     digga.inputs.nixlib.follows = "nixos";
     digga.inputs.home-manager.follows = "home";
-    digga.inputs.deploy.follows = "deploy";
+    #digga.inputs.deploy.follows = "deploy";
+    digga.inputs.deploy.follows = "nixos";
 
     home.url = "github:nix-community/home-manager/release-22.11";
     home.inputs.nixpkgs.follows = "nixos";
 
-    darwin.url = "github:LnL7/nix-darwin";
-    darwin.inputs.nixpkgs.follows = "nixpkgs-darwin-stable";
+    #deploy.url = "github:serokell/deploy-rs";
+    #deploy.inputs.nixpkgs.follows = "nixos";
 
-    deploy.url = "github:serokell/deploy-rs";
-    deploy.inputs.nixpkgs.follows = "nixos";
+    #nvfetcher.url = "github:berberman/nvfetcher";
+    #nvfetcher.inputs.nixpkgs.follows = "nixos";
 
-    agenix.url = "github:ryantm/agenix";
-    agenix.inputs.nixpkgs.follows = "nixos";
-
-    nvfetcher.url = "github:berberman/nvfetcher";
-    nvfetcher.inputs.nixpkgs.follows = "nixos";
-
-    nixos-hardware.url = "github:nixos/nixos-hardware";
+    #nixos-hardware.url = "github:nixos/nixos-hardware";
   };
 
   outputs = {
     self,
-    digga,
     nixos,
-    home,
-    nixos-hardware,
-    nur,
     agenix,
-    nvfetcher,
-    deploy,
+    #deploy,
+    digga,
+    home,
     nixpkgs,
+    #nixos-hardware,
+    #nur,
+    #nvfetcher,
     ...
   } @ inputs:
     digga.lib.mkFlake
@@ -106,9 +108,9 @@
           });
         })
 
-        nur.overlay
+        #nur.overlay
         agenix.overlay
-        nvfetcher.overlay
+        #nvfetcher.overlay
 
         (import ./pkgs)
       ];
@@ -130,6 +132,7 @@
         imports = [(digga.lib.importHosts ./hosts/nixos)];
         hosts = {
           # set host-specific properties here
+          builder-arm-aws.system = "aarch64-linux";
           lidjamoypi.system = "aarch64-linux";
         };
         importables = rec {
