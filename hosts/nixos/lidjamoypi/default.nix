@@ -16,6 +16,9 @@ in {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+
+      # Local stuff.  Should be migrated to a shared location i guess.
+      ./iptables_exporter.nix
     ];
 
   boot = {
@@ -471,6 +474,11 @@ in {
       package = lib.mkForce pkgs.gnome3.gvfs;
     };
 
+    iptables_exporter = {
+      enable = true;
+      port = 9102;
+    };
+
     nginx = {
       enable = true;
       recommendedGzipSettings = true;
@@ -532,34 +540,89 @@ in {
       exporters = {
         node = {
           enable = true;
-          enabledCollectors = [
-            # "systemd"
-          ];
+          enabledCollectors = [ ];
           port = 9002;
         };
-        systemd = {
+        process = {
           enable = true;
+          settings.process_names = [
+            # Remove nix store path from process name
+            {
+              name = "{{.Matches.Wrapped}} {{ .Matches.Args }}";
+              cmdline = [ "^/nix/store[^ ]*/(?P<Wrapped>[^ /]*) (?P<Args>.*)" ];
+            }
+          ];
         };
       };
       extraFlags = [
-        "--storage.tsdb.retention.size=256MB"
+        "--storage.tsdb.retention.size=1GB"
+        #"--web.enable-admin-api"  # TODO(dave): Remove this after deleting the series
       ];
       globalConfig = {
         scrape_interval = "15s";
       };
       port = 9001;
-      retentionTime = "30d";
-      scrapeConfigs = [
-        {
-          job_name = "node";
-          static_configs = [{
-            targets = [
-              "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
-              "127.0.0.1:${toString config.services.prometheus.exporters.systemd.port}"
-            ];
+      retentionTime = "90d";
+
+      # TODO(Dave): Currently these are grouped by source.  Perhaps grouping
+      # by "logical metric type" would make more sense, as this could allow
+      # shared configuration for things like label replacement in contexts
+      # where is makes sense to share these (timeseries sets of the same metrics
+      # from multiple sources, for instance all "iptables"/"ip6tables"
+      # metrics) and use common relabeling or rewriting rules on them alone.
+      scrapeConfigs = let
+        mkTargets = host: lib.mapAttrsToList (_: v: "${host}:${toString v}");
+        relabels = {
+          iptables.version = [{
+            source_labels = ["__name__"];
+            regex = "iptables_.*";
+            target_label = "ip_stack";
+            replacement = "IPv4";
+          } {
+            source_labels = ["__name__"];
+            regex = "ip6tables_.*";
+            target_label = "ip_stack";
+            replacement = "IPv6";
           }];
-        }
-      ];
+          iptables.version_merge = [{
+            source_labels = ["__name__"];
+            regex = "ip(?:|6)tables_(.*)";
+            target_label = "__name__";
+            replacement = "merged_iptables_$1";
+          }];
+        };
+      in [{
+        job_name = "local-node";
+        metric_relabel_configs = [] ++
+          relabels.iptables.version ++
+          relabels.iptables.version_merge;
+        static_configs = [{
+          targets = let
+            s = config.services;
+            pe = s.prometheus.exporters;
+          in mkTargets "127.0.0.1" {
+            node = pe.node.port;
+            process = pe.process.port;
+            iptables = s.iptables_exporter.port;
+            prometheus = s.prometheus.port;
+          };
+          labels.source = "lidjamoypi";
+        }];
+      } {
+        job_name = "router";
+        metric_relabel_configs = [] ++
+          relabels.iptables.version ++
+          relabels.iptables.version_merge;
+        static_configs = [{
+          targets = mkTargets "10.68.0.1" {
+            # Would really love a way to magically discover these!
+            node = 9100;
+            process = 9101;
+            iptables = 9102;
+          };
+          labels.source = "rt-ax88u";
+        }];
+      }];
     };
 
     # Enable the OpenSSH daemon.
