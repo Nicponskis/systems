@@ -413,6 +413,8 @@ in {
 
     grafana = {
       enable = true;
+      # Get EIC (KiB, MiB, etc) units axis bugfix!
+      package = inputs.latest.legacyPackages.${pkgs.system}.grafana;
       settings.server = {
         domain = "lidjamoypi";
         http_addr = "127.0.0.1";
@@ -493,6 +495,16 @@ in {
           ];
           port = 9002;
         };
+        process = {
+          enable = true;
+          settings.process_names = [
+            # Remove nix store path from process name
+            {
+              name = "{{.Matches.Wrapped}} {{ .Matches.Args }}";
+              cmdline = [ "^/nix/store[^ ]*/(?P<Wrapped>[^ /]*) (?P<Args>.*)" ];
+            }
+          ];
+        };
         systemd = {
           enable = true;
         };
@@ -510,7 +522,9 @@ in {
           job_name = "node";
           static_configs = [{
             targets = [
+              # TODO(Dave): This should be done via a map over enabled exporters :/
               "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
+              "127.0.0.1:${toString config.services.prometheus.exporters.process.port}"
               "127.0.0.1:${toString config.services.prometheus.exporters.systemd.port}"
             ];
           }];

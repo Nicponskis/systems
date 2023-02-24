@@ -101,12 +101,14 @@
           # TODO(Dave): Do `imports` here actually matter??
           imports = [(digga.lib.importOverlays ./overlays)];
           overlays = [
+            # Get Rasp PI to retain clock value across reboots
             (final: prev: {
               inherit (fake-hwclock.packages."${prev.system}") fake-hwclock;
             })
+
+            # Fix CPU accounting exporter, see:
+            #  https://github.com/prometheus-community/systemd_exporter/issues/34
             (final: prev: {
-              # Fix CPU accounting exporter, see:
-              #  https://github.com/prometheus-community/systemd_exporter/issues/34
               prometheus-systemd-exporter = prev.prometheus-systemd-exporter.overrideAttrs (me: rec {
                 version = "0.5.0";
                 src = final.fetchFromGitHub {
