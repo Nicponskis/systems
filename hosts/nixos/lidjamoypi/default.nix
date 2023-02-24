@@ -451,6 +451,8 @@ in {
     #  '';
     #};
 
+    fake-hwclock.enable = true;
+
     grafana = {
       enable = true;
       settings.server = {

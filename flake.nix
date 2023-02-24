@@ -55,6 +55,18 @@
     nvfetcher.inputs.nixpkgs.follows = "nixos";
 
     nixos-hardware.url = "github:nixos/nixos-hardware";
+
+    #
+    # Extra packages or modules that people have already done for me :)
+    #
+
+    # fake-hwclock to save & restore realtime on rasp pi, since it doesn't
+    # have a realtime hw clock to persist walltime across boots otherwise
+    fake-hwclock.url = "github:EHfive/flakes";
+    fake-hwclock.inputs.nixpkgs.follows = "nixos";
+    fake-hwclock.inputs.deploy-rs.follows = "deploy";
+    fake-hwclock.inputs.home-manager.follows = "home";
+    # TODO(Dave): Handle the other transitive inputs for the above?
   };
 
   outputs = {
@@ -64,6 +76,7 @@
     agenix,
     deploy,
     digga,
+    fake-hwclock,
     home,
     nixos,
     nixos-hardware,
@@ -82,6 +95,30 @@
           # TODO(Dave): Do `imports` here actually matter??
           imports = [(digga.lib.importOverlays ./overlays)];
           overlays = [ ];
+        };
+        nixos-with-overlays = {
+          input = nixos;
+          # TODO(Dave): Do `imports` here actually matter??
+          imports = [(digga.lib.importOverlays ./overlays)];
+          overlays = [
+            # Get Rasp PI to retain clock value across reboots
+            (final: prev: {
+              inherit (fake-hwclock.packages."${prev.system}") fake-hwclock;
+            })
+            (final: prev: {
+              # Fix CPU accounting exporter, see:
+              #  https://github.com/prometheus-community/systemd_exporter/issues/34
+              prometheus-systemd-exporter = prev.prometheus-systemd-exporter.overrideAttrs (me: rec {
+                version = "0.5.0";
+                src = final.fetchFromGitHub {
+                  owner = "pelov";
+                  repo = me.pname;
+                  rev = "v${version}+cpu_stat1";
+                  sha256 = "sha256-k1kkbZLzacbDnbX2YecNRr3w5iMxdkUPMigZqKQlJf8=";
+                };
+              });
+            })
+          ];
         };
         nixpkgs-darwin-stable = {
           # TODO(Dave): Do `imports` here actually matter??
@@ -123,7 +160,7 @@
       nixos = {
         hostDefaults = {
           system = "x86_64-linux";
-          channelName = "nixos";
+          channelName = "nixos-with-overlays";
           imports = [(digga.lib.importExportableModules ./modules)];
           modules = [
             {lib.our = self.lib;}
@@ -131,6 +168,9 @@
             digga.nixosModules.nixConfig
             home.nixosModules.home-manager
             agenix.nixosModules.age
+
+            # TODO(Dave): Would love to be able to put this into the host-specific location!
+            fake-hwclock.nixosModules.fake-hwclock
           ];
         };
 
