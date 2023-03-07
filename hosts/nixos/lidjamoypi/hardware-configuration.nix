@@ -17,6 +17,11 @@
       fsType = "ext4";
     };
 
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
+
   swapDevices = [ ];
 
   nix.settings.max-jobs = lib.mkDefault 4;
