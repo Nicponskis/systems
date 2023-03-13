@@ -7,9 +7,10 @@
 let
   acmePort = 28888;
   acmeTlsPort = acmePort + 1;
-  nicponskiDomain = "nicponski.family";
-  nicponskiChallengeDomain = "_acme-challenge.${nicponskiDomain}";
-  stitchpiDomain = "stitchpi.${nicponskiDomain}";
+  nicponskiFamilyDomain = "nicponski.family";
+  nicponskiChallengeDomain = "_acme-challenge.${nicponskiFamilyDomain}";
+  nicponskiDevDomain = "nicponski.dev";
+  stitchpiDomain = "stitchpi.${nicponskiFamilyDomain}";
   foopiDomain = "foo.${stitchpiDomain}";
 
 in {
@@ -340,17 +341,19 @@ in {
         #  domain = "*.${foopiDomain}";
         #};
 
-        "${nicponskiDomain}" = {
+        "${nicponskiFamilyDomain}" = {
           # TODO(Dave): Replace the credentials file with something using agenix!!
           credentialsFile = "/var/lib/secrets/certs.nicponski.secret";
           # We don't need to wait for propagation since this is a local DNS server
           dnsPropagationCheck = false;
           dnsProvider = "rfc2136";
-          domain = "*.${nicponskiDomain}";
+          domain = "*.${nicponskiFamilyDomain}";
         };
       };
       defaults = {
         email = "dave.nicponski+acme.certs@gmail.com";
+        # `nginx` needs to be able to access these certs!
+        group = config.users.users.nginx.group;
       };
     };
 
@@ -485,7 +488,7 @@ in {
           serverName = stitchpiDomain;
         };
         "${stitchpiDomain}" = {
-          useACMEHost = stitchpiDomain;
+          addSSL = true;
           locations."/" = {
             #extraConfig = ''
             #  add_header 'Access-Control-Allow-Origin' "*" always;
@@ -493,12 +496,21 @@ in {
             proxyPass = "http://127.0.0.1:11470";  # Stremio
             proxyWebsockets = true;
           };
+          # TODO(Dave): Remove the original perhaps?
+          useACMEHost = nicponskiFamilyDomain; #stitchpiDomain;
         };
+      # Below line and let binding are WIP
+      } // (let
+        wildcardDomains = [
+          "wildcard.${nicponskiFamilyDomain}"
+          "${config.services.grafana.domain}"
+        ];
+        above /*"${config.services.grafana.domain}"*/ = {
+          #default = true;  # moved below
 
-        "${config.services.grafana.domain}" = {
-          default = true;
           #locations."/grafana" = {
           locations."/" = {
+
             extraConfig = ''
 	      #rewrite  ^/grafana(/.*)  $1 break;
               proxy_set_header Host $host;
@@ -507,7 +519,29 @@ in {
             proxyWebsockets = true;
           };
         };
-      };
+      in {
+        # "${config.services.grafana.domain}" = above // {
+        #     default = true;
+        # };
+        "wildcard.${nicponskiFamilyDomain}" = above // {
+          # Let's try this
+          addSSL = true;
+          serverAliases = wildcardDomains;
+
+          useACMEHost = nicponskiFamilyDomain;
+        };
+
+        "localhost" = {
+          addSSL = true;
+          locations."/" = {
+            return = "200 'Maybe try: \"${
+              lib.concatStringsSep " " wildcardDomains
+            }\"'";
+          };
+          useACMEHost = nicponskiFamilyDomain;
+        };
+
+      });
     };
 
     prometheus = {
