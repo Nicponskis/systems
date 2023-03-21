@@ -730,6 +730,10 @@ in {
       # Enable the X11 windowing system.
       enable = true;
       exportConfiguration = true;
+      inputClassSections = [
+        # TODO(Dave): Move this into an X11-specific location perhaps?
+        (builtins.readFile ./joystick-input.conf)
+      ];
       modules = with pkgs.xorg; [
         xf86inputjoystick
       ];
