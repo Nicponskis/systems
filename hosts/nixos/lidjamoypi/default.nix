@@ -18,6 +18,7 @@ in {
       ./hardware-configuration.nix
 
       # Local stuff.  Should be migrated to a shared location i guess.
+      ./dwarffs.nix
       ./iptables_exporter.nix
     ];
 
@@ -453,6 +454,11 @@ in {
     #    }
     #  '';
     #};
+
+    dwarffs = {
+      enable = true;
+      gcDelay = "3d";
+    };
 
     fake-hwclock.enable = true;
 
