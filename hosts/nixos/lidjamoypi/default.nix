@@ -17,6 +17,22 @@ let
   streamDomain = "stream.${nicponskiFamilyDomain}";
   streamChallengeDomain = "${acmeChallengePrefix}.${streamDomain}";
   nasAddress = "10.68.0.1";
+
+  myRetroarch = (
+      let
+        retroArchWith = cores: [ (pkgs.retroarch.override {cores = cores;}) ] ++ cores;
+      in
+        with pkgs.libretro; retroArchWith [
+          mesen # NES
+          #bsnes # SNES
+          #bsnes-mercury-performance # SNES
+          snes9x # SNES
+          snes9x2010 # SNES
+          mupen64plus # N64
+          picodrive # Sega Genesis
+          beetle-psx-hw # Playstation
+        ]
+    );
 in {
   imports =
     [ # Include the results of the hardware scan.
@@ -154,18 +170,9 @@ in {
       vimPlugins.Vundle-vim
       watch
       wget
-    ] ++ (
-      let
-        retroArchWith = cores: [ (pkgs.retroarch.override {cores = cores;}) ] ++ cores;
-      in
-        with pkgs.libretro; retroArchWith [
-          mesen # NES
-          bsnes-mercury-performance # SNES
-          mupen64plus # N64
-          picodrive # Sega Genesis
-          beetle-psx-hw # Playstation
-        ]
-    );
+    ] ++
+      myRetroarch
+    ;
   };
 
   fileSystems = let
@@ -763,10 +770,13 @@ in {
       #desktopManager.xfce.enable = true;
 
       # Incompatible with x2go server :'(
-      #desktopManager.lxqt.enable = true;
+      # desktopManager.lxqt.enable = true;
+
       # https://wiki.x2go.org/doku.php/doc:de-compat
-      #desktopManager.mate.enable = true;
-      desktopManager.xterm.enable = true;
+      # desktopManager.mate.enable = true;
+      desktopManager.retroarch.enable = true;
+      desktopManager.retroarch.package = (builtins.head myRetroarch);
+      # desktopManager.xterm.enable = true;
 
       displayManager.autoLogin = {
         enable = true;
