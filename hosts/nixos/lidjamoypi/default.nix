@@ -771,6 +771,17 @@ in {
       #displayManager.sddm.enable = true;
       displayManager.lightdm.enable = true;
 
+      serverFlagsSection = ''
+        Option "BlankTime" "0"
+        # TODO(Dave): Are the below useful?
+        Option "StandbyTime" "0"
+        Option "SuspendTime" "0"
+        Option "OffTime" "0"
+      '';
+
+      # TODO(dave): Maybe get rid of this if it doesn't help?
+      updateDbusEnvironment = true;
+
       windowManager."2bwm".enable = true;
     };
   };
