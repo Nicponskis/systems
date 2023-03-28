@@ -770,12 +770,12 @@ in {
       #desktopManager.xfce.enable = true;
 
       # Incompatible with x2go server :'(
-      # desktopManager.lxqt.enable = true;
+      desktopManager.lxqt.enable = true;
 
       # https://wiki.x2go.org/doku.php/doc:de-compat
       # desktopManager.mate.enable = true;
-      desktopManager.retroarch.enable = true;
-      desktopManager.retroarch.package = (builtins.head myRetroarch);
+      # desktopManager.retroarch.enable = true;
+      # desktopManager.retroarch.package = (builtins.head myRetroarch);
       # desktopManager.xterm.enable = true;
 
       displayManager.autoLogin = {
@@ -785,6 +785,8 @@ in {
       #displayManager.sddm.enable = true;
       displayManager.lightdm.enable = true;
 
+      # Disable the annoying "screen blanking" / kill HDMI signal that was
+      # happening in the middle of my games, every 10 minutes.
       serverFlagsSection = ''
         Option "BlankTime" "0"
         # TODO(Dave): Are the below useful?
@@ -798,8 +800,10 @@ in {
 
       windowManager."2bwm".enable = true;
     };
+    fractalart.enable = true;  # Goes w/ xserver
   };
-  services.fractalart.enable = true;
+  # TODO(Dave): Find a way to combine this with the `services.` part. :(
+  environment.lxqt.excludePackages = [ pkgs.xscreensaver ];
 
   # Enable sound.
   sound.enable = true;
