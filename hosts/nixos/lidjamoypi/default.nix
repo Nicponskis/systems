@@ -455,6 +455,8 @@ in {
 
     grafana = {
       enable = true;
+      # Get EIC (KiB, MiB, etc) units axis bugfix!
+      package = inputs.latest.legacyPackages.${pkgs.system}.grafana;
       settings.server = {
         domain = "lidjamoypi";
         http_addr = "127.0.0.1";
