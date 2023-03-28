@@ -5,12 +5,17 @@
 { config, inputs, pkgs, lib, ... }:
 
 let
+  # TODO(Dave): Move these into an attrset perhaps, for name scoping
   acmePort = 28888;
   acmeTlsPort = acmePort + 1;
-  nicponskiDomain = "nicponski.family";
-  nicponskiChallengeDomain = "_acme-challenge.${nicponskiDomain}";
-  stitchpiDomain = "stitchpi.${nicponskiDomain}";
+  nicponskiFamilyDomain = "nicponski.family";
+  acmeChallengePrefix = "_acme-challenge";
+  nicponskiChallengeDomain = "${acmeChallengePrefix}.${nicponskiFamilyDomain}";
+  nicponskiDevDomain = "nicponski.dev";
+  stitchpiDomain = "stitchpi.${nicponskiFamilyDomain}";
   foopiDomain = "foo.${stitchpiDomain}";
+  streamDomain = "stream.${nicponskiFamilyDomain}";
+  streamChallengeDomain = "${acmeChallengePrefix}.${streamDomain}";
   nasAddress = "10.68.0.1";
 in {
   imports =
@@ -360,17 +365,34 @@ in {
         #  dnsProvider = "rfc2136";
         #  domain = "*.${foopiDomain}";
         #};
-
-        "${nicponskiDomain}" = {
+        "${streamDomain}" = {
+          # TODO(Dave): Replace the credentials file with something using agenix!!
           credentialsFile = "/var/lib/secrets/certs.nicponski.secret";
           # We don't need to wait for propagation since this is a local DNS server
           dnsPropagationCheck = false;
           dnsProvider = "rfc2136";
-          domain = "*.${nicponskiDomain}";
+
+          # domain = "*.${nicponskiFamilyDomain}";
+          extraDomainNames = [
+            "*.${streamDomain}"
+            # TODO(Dave): Grab a top-level wildcard here as well perhaps, instead
+            # of 'stream.nicponski.family' default from name??
+          ];
+        };
+
+        "${nicponskiFamilyDomain}" = {
+          # TODO(Dave): Replace the credentials file with something using agenix!!
+          credentialsFile = "/var/lib/secrets/certs.nicponski.secret";
+          # We don't need to wait for propagation since this is a local DNS server
+          dnsPropagationCheck = false;
+          dnsProvider = "rfc2136";
+          domain = "*.${nicponskiFamilyDomain}";
         };
       };
       defaults = {
         email = "dave.nicponski+acme.certs@gmail.com";
+        # `nginx` needs to be able to access these certs!
+        group = config.users.users.nginx.group;
       };
     };
 
@@ -421,19 +443,26 @@ in {
           master = true;
           extraConfig = "allow-update { key rfc2136key.${nicponskiChallengeDomain}; };";
         }
+
+        rec {
+          name = "${streamChallengeDomain}";
+          file = "/var/db/bind/${name}";
+          master = true;
+          extraConfig = "allow-update { key rfc2136key.${nicponskiChallengeDomain}; };";
+        }
       ];
     };
 
     ddclient = {
       enable = true;
 
-      domains = [
-        stitchpiDomain
-      ];
+      domains = [ "lidjamoypi.${nicponskiFamilyDomain}" ];
       interval = "1min";
+      # TODO(Dave): Replace w/ agenix secret
       passwordFile = "/etc/nixos/secrets/ddclient/password";
       protocol = "googledomains";
-      username = "tTmo2ImQK5UfQsqH";
+      username = "HIPNWcxNQomCcWS4";
+      verbose = true;
     };
     # This block would act as a DHCP server for ETH0, assigning IP addresses
     # to connected devices.
@@ -493,6 +522,7 @@ in {
       recommendedTlsSettings = true;
 
       virtualHosts = {
+        # TODO(Dave): Is this even used now?  :thinking_face:
         "${stitchpiDomain}.acme" = {
           addSSL = true;
           enableACME = true;
@@ -514,8 +544,9 @@ in {
           };
           serverName = stitchpiDomain;
         };
+
         "${stitchpiDomain}" = {
-          useACMEHost = stitchpiDomain;
+          addSSL = true;
           locations."/" = {
             #extraConfig = ''
             #  add_header 'Access-Control-Allow-Origin' "*" always;
@@ -523,21 +554,70 @@ in {
             proxyPass = "http://127.0.0.1:11470";  # Stremio
             proxyWebsockets = true;
           };
+          # TODO(Dave): Remove the original perhaps?
+          useACMEHost = nicponskiFamilyDomain; #stitchpiDomain;
         };
+      # Below line and let binding are WIP
+      } // (let
+        wildcardDomains = [
+          "wildcard.${nicponskiFamilyDomain}"
+          "${config.services.grafana.domain}"
+        ];
+      in {
+        "wildcard.${nicponskiFamilyDomain}" = {
+          addSSL = true;
 
-        "${config.services.grafana.domain}" = {
-          default = true;
-          #locations."/grafana" = {
           locations."/" = {
             extraConfig = ''
-	      #rewrite  ^/grafana(/.*)  $1 break;
               proxy_set_header Host $host;
             '';
             proxyPass = "http://127.0.0.1:${toString config.services.grafana.port}";
             proxyWebsockets = true;
           };
+          # TODO(Dave): Stop using these, do something
+          # more intentional :)
+          serverAliases = wildcardDomains;
+          useACMEHost = nicponskiFamilyDomain;
         };
-      };
+
+        "localhost" = {
+          # addSSL = true;
+          default = true;
+          locations."/" = {
+            return = "200 'Maybe try one of: \"${
+              lib.concatStringsSep " " (
+                # TODO(Dave): Iterate over all virtualHost domains + serverAliases
+                wildcardDomains
+                )
+            }\"'";
+          };
+          # useACMEHost = nicponskiFamilyDomain;
+        };
+
+      }) // (let
+        # TODO(Dave): This should be template-able with a matcher in the return rule
+        streamer = digit: {
+          "${digit}.${streamDomain}" = {
+            forceSSL = true;
+            listen = let
+              port = p: {
+                addr = "0.0.0.0";
+                port = p;
+              };
+            in [
+              # (port 80)
+              # TODO(Dave): This kinda sucks :(
+              (port acmePort)
+              ((port acmeTlsPort) // { ssl = true; })
+            ];
+            locations."/" = {
+              return = "301 https://10-69-0-${digit}.519b6502d940.stremio.rocks:12470";
+            };
+            useACMEHost = "${streamDomain}";
+          };
+        };
+      in (streamer "1") // (streamer "2")
+      );
     };
 
     prometheus = {
