@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, lib, ... }:
+{ config, inputs, pkgs, lib, ... }:
 
 let
   acmePort = 28888;
@@ -302,7 +302,7 @@ in {
       #max-jobs = 0;
       max-jobs = 4;
 
-      trusted-users = [ "root" "dave" ];
+      trusted-users = [ "root" "dave" "pibuilder" ];
     };
   };
 
@@ -368,6 +368,31 @@ in {
       defaults = {
         email = "dave.nicponski+acme.certs@gmail.com";
       };
+    };
+
+    sudo = {
+      extraRules = [
+        {
+          users = ["${config.users.users."pibuilder".name}"];
+          commands = let
+            full = re: "^${re}$";
+            sw = bin: "/run/current-system/sw/bin/${bin}";
+            profileRE = "/nix/var/nix/profiles/system(-profiles/[^/]+)?";
+            systemRE = "/nix/store/[a-zA-Z0-9]{32}-nixos-system-${config.system.name}-[^/]+";
+            switchRE = "${systemRE}/bin/switch-to-configuration";
+            actionRE = "switch|boot|test|dry-activate";
+            nopass = command: {
+              inherit command;
+              options = [ "NOPASSWD" "LOG_INPUT" "LOG_OUTPUT" ];
+            };
+            in [
+              (nopass "${sw "nix-env"} ${full "-p ${profileRE} --set ${systemRE}"}")
+              (nopass "${sw "nix-env"} ${full "--rollback -p ${profileRE}"}")
+              (nopass "${sw "nix-env"} ${full "-p ${profileRE} --list-generations"}")
+              (nopass "${full switchRE} ${full actionRE}")
+            ];
+        }
+      ];
     };
   };
 
@@ -645,6 +670,23 @@ in {
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCi+GbiMk0UqGYfG+7jmTGaKRtIVTFBwVG0p6kg3l4rsG2S7LCBG9MAgMQQKCfBay1SdXVZvr8wrc7TMj2dk0ZrnQklBd7Cn6hXE3rOiIa+1FFAtXfI4r6gMhzIa91uF63okW09wPYCUxUYmhNSGwC1rTytU5SE1jf5o/Asp/ZfHvmxhm5EUxw5qacS/Ilf4OhEWyQaQG6xeHnO4NCGThIpdTxC2Q9LpQAPlz6lZedEWTTLcXRTcG+olhxfudQ/JMdzQhqluVRCOgolIS32rvKi9st7H3D6q2sZH8MNnbl22FQNHg8f4fl34L1X/n/Zf6573eL0V5uKEtdachwrN+X5FUgwwzn7ivHjAxOHVHuWuADk+HVCG95zN1eyPLbCR8FwF/LtfjfQiF6Erwd3mNdjMK9J1upAfZkix7Ap8UDi2qmK5fzWNXcvFV7bFSo8kRd7ztMRUzHU7iTynRBUGhQel0+S27oMkOrf8yucvEWwf6dq064IleQEjronyweUmLgcSIWrxZJcLohnruleJzSz1MngZ8lsccMNGQys1D1ycayYirMFqBneNnRPtpaqesy9aADvxyzCvp69DogeJEfe++FGGVaKijxRc//EwCqqSyaie+eH1+eVMva+QN3G3yjNgIiNo3ztc60hqQq0sG/K447zHuyr5xFc54fYFv2ZwQ== dave.nicponski@gmail.com"
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6P8roQA7hkbzFM8RqDY8DDkwfg+GbVzilBWjF6L8urodwkXtGPGIf/uyP18bC+ceYRyYbYRAeynVpueNPkcWQUf0GzvBXVkO6bHc7/M6Dj8VYe3v/lgeb6fyVRiI7khsS1ra37asPCOLxLqzYUh8+ml5tzmED3dwpgPcULw0/jnRaKlzJ/TNaDAI1u69FBbDswblNhFqSoQq1C6nUHb2hf9Zegb3FHwy4pE3LVvxqZiVj1z0zlrNVWHYM/LN4sihp9n81llHGDLa0ReZiYkgPBgvTn90XKbZ/gI3RuxYL52cxUohP2r+P4G2nIvaJK4SK9quEIXYhro7dJRz6h3SV dave.nicponski@gmail.com chromebook"
       ];
+    };
+
+    groups.pibuilder = {};
+    users."pibuilder" = {
+      createHome = false;
+      group = "pibuilder";
+      home = "/var/empty";
+      isSystemUser = true;
+      openssh.authorizedKeys.keys = [
+        # TODO(Dave): Should probably make the pibuilder only able to access particular
+        # nix system-related commands like updating the system and boot profiles.
+        # Can do this by using a new system-update-only user with some `sudo NOPASSWD`
+        # config entries, one for each possible `targetHostCmd` invocation in the
+        # `nixos-rebuild` script.
+        "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGjtYCp9zMMsGp9d4bYtywB15Li8Pag9kFTU7XS/v3U/PZNprD9+RNp6X9k2RRg0GfIzsn15Kw59ka75gAEFi7E= pibuilder@auto.builder.arm.aws"
+      ];
+      useDefaultShell = true;
     };
   };
 }
