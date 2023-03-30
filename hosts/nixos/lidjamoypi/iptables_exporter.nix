@@ -70,7 +70,7 @@ in {
       })
     ];
 
-    systemd.services."iptables_exporter" = {
+    systemd.services."prometheus-iptables_exporter" = {
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       path = [ pkgs.iptables ];

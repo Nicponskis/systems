@@ -638,6 +638,7 @@ in {
         };
         process = {
           enable = true;
+          extraFlags = ["--debug"];
           settings.process_names = [
             # Remove nix store path from process name
             {
