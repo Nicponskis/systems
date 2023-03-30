@@ -800,7 +800,11 @@ in {
 
       windowManager."2bwm".enable = true;
     };
-    fractalart.enable = true;  # Goes w/ xserver
+    fractalart = {
+      enable = true;  # Goes w/ xserver
+      width = 1280;
+      height = 720;
+    };
   };
   # TODO(Dave): Find a way to combine this with the `services.` part. :(
   environment.lxqt.excludePackages = [ pkgs.xscreensaver ];
