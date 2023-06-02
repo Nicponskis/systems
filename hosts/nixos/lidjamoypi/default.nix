@@ -322,27 +322,25 @@ in {
     };
   };
 
-  nixpkgs = {
-    config = {
-      allowUnfree = true;
-    };
-
-    overlays = [
-      # Fix kernel wifi support by using an older firmware version, as per
-      # the nixos RaspPI WLAN section
-      (final: prev: {
-        linux-firmware-oldwifi = prev.linux-firmware.overrideAttrs (old: {
-          version = "2020-12-18";
-          src = pkgs.fetchgit {
-            url = "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git";
-            rev = "b79d2396bc630bfd9b4058459d3e82d7c3428599";
-            sha256 = "1rb5b3fzxk5bi6kfqp76q1qszivi0v1kdz1cwj2llp5sd9ns03b5";
-          };
-          outputHash = "1p7vn2hfwca6w69jhw5zq70w44ji8mdnibm1z959aalax6ndy146";
-        });
-      })
-    ];
+  nixpkgs.config = {
+    allowUnfree = true;
   };
+
+  nixpkgs.overlays = [
+    # Fix kernel wifi support by using an older firmware version, as per
+    # the nixos RaspPI WLAN section
+    (final: prev: {
+      linux-firmware-oldwifi = prev.linux-firmware.overrideAttrs (old: {
+        version = "2020-12-18";
+        src = pkgs.fetchgit {
+          url = "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git";
+          rev = "b79d2396bc630bfd9b4058459d3e82d7c3428599";
+          sha256 = "1rb5b3fzxk5bi6kfqp76q1qszivi0v1kdz1cwj2llp5sd9ns03b5";
+        };
+        outputHash = "1p7vn2hfwca6w69jhw5zq70w44ji8mdnibm1z959aalax6ndy146";
+      });
+    })
+  ];
 
 
   # Select internationalisation properties.
@@ -361,453 +359,450 @@ in {
     gamemode.enable = true;
   };
 
-  security = {
-    acme = {
-      acceptTerms = true;
-      certs = {
-        #"${foopiDomain}" = {
-        #  credentialsFile = "/var/lib/secrets/certs.foopi.secret";
-        #  # We don't need to wait for propagation since this is a local DNS server
-        #  dnsPropagationCheck = false;
-        #  dnsProvider = "rfc2136";
-        #  domain = "*.${foopiDomain}";
-        #};
-        "${streamDomain}" = {
-          # TODO(Dave): Replace the credentials file with something using agenix!!
-          credentialsFile = "/var/lib/secrets/certs.nicponski.secret";
-          # We don't need to wait for propagation since this is a local DNS server
-          dnsPropagationCheck = false;
-          dnsProvider = "rfc2136";
+  security.acme = {
+    acceptTerms = true;
+    certs = {
+      #"${foopiDomain}" = {
+      #  credentialsFile = "/var/lib/secrets/certs.foopi.secret";
+      #  # We don't need to wait for propagation since this is a local DNS server
+      #  dnsPropagationCheck = false;
+      #  dnsProvider = "rfc2136";
+      #  domain = "*.${foopiDomain}";
+      #};
+      "${streamDomain}" = {
+        # TODO(Dave): Replace the credentials file with something using agenix!!
+        credentialsFile = "/var/lib/secrets/certs.nicponski.secret";
+        # We don't need to wait for propagation since this is a local DNS server
+        dnsPropagationCheck = false;
+        dnsProvider = "rfc2136";
 
-          # domain = "*.${nicponskiFamilyDomain}";
-          extraDomainNames = [
-            "*.${streamDomain}"
-            # TODO(Dave): Grab a top-level wildcard here as well perhaps, instead
-            # of 'stream.nicponski.family' default from name??
+        # domain = "*.${nicponskiFamilyDomain}";
+        extraDomainNames = [
+          "*.${streamDomain}"
+          # TODO(Dave): Grab a top-level wildcard here as well perhaps, instead
+          # of 'stream.nicponski.family' default from name??
+        ];
+      };
+
+      "${nicponskiFamilyDomain}" = {
+        # TODO(Dave): Replace the credentials file with something using agenix!!
+        credentialsFile = "/var/lib/secrets/certs.nicponski.secret";
+        # We don't need to wait for propagation since this is a local DNS server
+        dnsPropagationCheck = false;
+        dnsProvider = "rfc2136";
+        domain = "*.${nicponskiFamilyDomain}";
+      };
+    };
+    defaults = {
+      email = "dave.nicponski+acme.certs@gmail.com";
+      # `nginx` needs to be able to access these certs!
+      group = config.users.users.nginx.group;
+    };
+  };
+
+  security.sudo = {
+    extraRules = [
+      {
+        users = ["${config.users.users."pibuilder".name}"];
+        commands = let
+          full = re: "^${re}$";
+          sw = bin: "/run/current-system/sw/bin/${bin}";
+          profileRE = "/nix/var/nix/profiles/system(-profiles/[^/]+)?";
+          systemRE = "/nix/store/[a-zA-Z0-9]{32}-nixos-system-${config.system.name}-[^/]+";
+          switchRE = "${systemRE}/bin/switch-to-configuration";
+          actionRE = "switch|boot|test|dry-activate";
+          nopass = command: {
+            inherit command;
+            options = [ "NOPASSWD" "LOG_INPUT" "LOG_OUTPUT" ];
+          };
+          in [
+            (nopass "${sw "nix-env"} ${full "-p ${profileRE} --set ${systemRE}"}")
+            (nopass "${sw "nix-env"} ${full "--rollback -p ${profileRE}"}")
+            (nopass "${sw "nix-env"} ${full "-p ${profileRE} --list-generations"}")
+            (nopass "${full switchRE} ${full actionRE}")
           ];
-        };
-
-        "${nicponskiFamilyDomain}" = {
-          # TODO(Dave): Replace the credentials file with something using agenix!!
-          credentialsFile = "/var/lib/secrets/certs.nicponski.secret";
-          # We don't need to wait for propagation since this is a local DNS server
-          dnsPropagationCheck = false;
-          dnsProvider = "rfc2136";
-          domain = "*.${nicponskiFamilyDomain}";
-        };
-      };
-      defaults = {
-        email = "dave.nicponski+acme.certs@gmail.com";
-        # `nginx` needs to be able to access these certs!
-        group = config.users.users.nginx.group;
-      };
-    };
-
-    sudo = {
-      extraRules = [
-        {
-          users = ["${config.users.users."pibuilder".name}"];
-          commands = let
-            full = re: "^${re}$";
-            sw = bin: "/run/current-system/sw/bin/${bin}";
-            profileRE = "/nix/var/nix/profiles/system(-profiles/[^/]+)?";
-            systemRE = "/nix/store/[a-zA-Z0-9]{32}-nixos-system-${config.system.name}-[^/]+";
-            switchRE = "${systemRE}/bin/switch-to-configuration";
-            actionRE = "switch|boot|test|dry-activate";
-            nopass = command: {
-              inherit command;
-              options = [ "NOPASSWD" "LOG_INPUT" "LOG_OUTPUT" ];
-            };
-            in [
-              (nopass "${sw "nix-env"} ${full "-p ${profileRE} --set ${systemRE}"}")
-              (nopass "${sw "nix-env"} ${full "--rollback -p ${profileRE}"}")
-              (nopass "${sw "nix-env"} ${full "-p ${profileRE} --list-generations"}")
-              (nopass "${full switchRE} ${full actionRE}")
-            ];
-        }
-      ];
-    };
+      }
+    ];
   };
 
   # List services that you want to enable:
-  services = {
-    bind = {
-      enable = true;
-      extraConfig = ''
-        include "/var/lib/secrets/dnskeys.conf";
-      '';
-      zones = [
-        rec {
-          name = foopiDomain;
-          file = "/var/db/bind/${name}";
-          master = true;
-          extraConfig = "allow-update { key rfc2136key.${foopiDomain}; };";
-        }
+  services.bind = {
+    enable = true;
+    extraConfig = ''
+      include "/var/lib/secrets/dnskeys.conf";
+    '';
+    zones = [
+      rec {
+        name = foopiDomain;
+        file = "/var/db/bind/${name}";
+        master = true;
+        extraConfig = "allow-update { key rfc2136key.${foopiDomain}; };";
+      }
 
-        rec {
-          name = "${nicponskiChallengeDomain}";
-          file = "/var/db/bind/${name}";
-          master = true;
-          extraConfig = "allow-update { key rfc2136key.${nicponskiChallengeDomain}; };";
-        }
+      rec {
+        name = "${nicponskiChallengeDomain}";
+        file = "/var/db/bind/${name}";
+        master = true;
+        extraConfig = "allow-update { key rfc2136key.${nicponskiChallengeDomain}; };";
+      }
 
-        rec {
-          name = "${streamChallengeDomain}";
-          file = "/var/db/bind/${name}";
-          master = true;
-          extraConfig = "allow-update { key rfc2136key.${nicponskiChallengeDomain}; };";
-        }
-      ];
+      rec {
+        name = "${streamChallengeDomain}";
+        file = "/var/db/bind/${name}";
+        master = true;
+        extraConfig = "allow-update { key rfc2136key.${nicponskiChallengeDomain}; };";
+      }
+    ];
+  };
+
+  services.ddclient = {
+    enable = true;
+
+    domains = [ "lidjamoypi.${nicponskiFamilyDomain}" ];
+    interval = "1min";
+    # TODO(Dave): Replace w/ agenix secret
+    passwordFile = "/etc/nixos/secrets/ddclient/password";
+    protocol = "googledomains";
+    username = "HIPNWcxNQomCcWS4";
+    verbose = true;
+  };
+  # This block would act as a DHCP server for ETH0, assigning IP addresses
+  # to connected devices.
+  #services.dhcpd4 = {
+  #  enable = true;
+  #  interfaces = ["eth0"];
+  #  extraConfig = ''
+  #    subnet 10.3.14.0 netmask 255.255.255.0 {
+  #      range 10.3.14.160 10.3.14.240;
+  #      authoritative;
+  #      max-lease-time      604800;
+  #      default-lease-time  86400;
+  #
+  #      option subnet-mask          255.255.255.0;
+  #      option broadcast-address    10.3.14.255;
+  #      option routers              10.3.14.159;
+  #      option domain-name-servers  8.8.8.8;
+  #    }
+  #  '';
+  #};
+
+  services.dwarffs = {
+    enable = true;
+    gcDelay = "3d";
+  };
+
+  services.fake-hwclock.enable = true;
+
+  services.grafana = {
+    enable = true;
+    # Get EIC (KiB, MiB, etc) units axis bugfix!
+    package = inputs.latest.legacyPackages.${pkgs.system}.grafana;
+    settings.server = {
+      domain = "lidjamoypi";
+      http_addr = "127.0.0.1";
+      port = 3000;
     };
-
-    ddclient = {
-      enable = true;
-
-      domains = [ "lidjamoypi.${nicponskiFamilyDomain}" ];
-      interval = "1min";
-      # TODO(Dave): Replace w/ agenix secret
-      passwordFile = "/etc/nixos/secrets/ddclient/password";
-      protocol = "googledomains";
-      username = "HIPNWcxNQomCcWS4";
-      verbose = true;
-    };
-    # This block would act as a DHCP server for ETH0, assigning IP addresses
-    # to connected devices.
-    #dhcpd4 = {
-    #  enable = true;
-    #  interfaces = ["eth0"];
-    #  extraConfig = ''
-    #    subnet 10.3.14.0 netmask 255.255.255.0 {
-    #      range 10.3.14.160 10.3.14.240;
-    #      authoritative;
-    #      max-lease-time      604800;
-    #      default-lease-time  86400;
-    #
-    #      option subnet-mask          255.255.255.0;
-    #      option broadcast-address    10.3.14.255;
-    #      option routers              10.3.14.159;
-    #      option domain-name-servers  8.8.8.8;
-    #    }
-    #  '';
-    #};
-
-    dwarffs = {
-      enable = true;
-      gcDelay = "3d";
-    };
-
-    fake-hwclock.enable = true;
-
-    grafana = {
-      enable = true;
-      # Get EIC (KiB, MiB, etc) units axis bugfix!
-      package = inputs.latest.legacyPackages.${pkgs.system}.grafana;
-      settings.server = {
-        domain = "lidjamoypi";
-        http_addr = "127.0.0.1";
-        port = 3000;
-      };
-      #protocol = "http";
-    };
+    #protocol = "http";
+  };
 
     # For browsing samba shares (in xwindows)
-    gvfs = {
-      enable = true;
-      package = lib.mkForce pkgs.gnome3.gvfs;
-    };
+  services.gvfs = {
+    enable = true;
+    package = lib.mkForce pkgs.gnome3.gvfs;
+  };
 
-    iptables_exporter = {
-      enable = true;
-      port = 9102;
-    };
+  services.iptables_exporter = {
+    enable = true;
+    port = 9102;
+  };
 
-    nginx = {
-      enable = true;
-      recommendedGzipSettings = true;
-      recommendedOptimisation = true;
-      #recommendedProxySettings = true;
-      recommendedTlsSettings = true;
+  services.nginx = {
+    enable = true;
+    recommendedGzipSettings = true;
+    recommendedOptimisation = true;
+    #recommendedProxySettings = true;
+    recommendedTlsSettings = true;
 
-      virtualHosts = {
-        # TODO(Dave): Is this even used now?  :thinking_face:
-        "${stitchpiDomain}.acme" = {
-          addSSL = true;
-          enableACME = true;
-          listen = [ {
-            addr = "0.0.0.0";
-            port = acmePort;
-          } {
-            addr = "0.0.0.0";
-            port = acmeTlsPort;
-            ssl = true;
-          }];
-          locations."/" = {
-            return = "301 https://google.com";
-          #  #extraConfig = ''
-          #  #  add_header 'Access-Control-Allow-Origin' "*" always;
-          #  #'';
-          #  proxyPass = "http://127.0.0.1:11470";  # Stremio
-          #  proxyWebsockets = true;
-          };
-          serverName = stitchpiDomain;
+    virtualHosts = {
+      # TODO(Dave): Is this even used now?  :thinking_face:
+      "${stitchpiDomain}.acme" = {
+        addSSL = true;
+        enableACME = true;
+        listen = [ {
+          addr = "0.0.0.0";
+          port = acmePort;
+        } {
+          addr = "0.0.0.0";
+          port = acmeTlsPort;
+          ssl = true;
+        }];
+        locations."/" = {
+          return = "301 https://google.com";
+        #  #extraConfig = ''
+        #  #  add_header 'Access-Control-Allow-Origin' "*" always;
+        #  #'';
+        #  proxyPass = "http://127.0.0.1:11470";  # Stremio
+        #  proxyWebsockets = true;
         };
-
-        "${stitchpiDomain}" = {
-          addSSL = true;
-          locations."/" = {
-            #extraConfig = ''
-            #  add_header 'Access-Control-Allow-Origin' "*" always;
-            #'';
-            proxyPass = "http://127.0.0.1:11470";  # Stremio
-            proxyWebsockets = true;
-          };
-          # TODO(Dave): Remove the original perhaps?
-          useACMEHost = nicponskiFamilyDomain; #stitchpiDomain;
-        };
-      # Below line and let binding are WIP
-      } // (let
-        wildcardDomains = [
-          "wildcard.${nicponskiFamilyDomain}"
-          "${config.services.grafana.domain}"
-        ];
-      in {
-        "wildcard.${nicponskiFamilyDomain}" = {
-          addSSL = true;
-
-          locations."/" = {
-            extraConfig = ''
-              proxy_set_header Host $host;
-            '';
-            proxyPass = "http://127.0.0.1:${toString config.services.grafana.port}";
-            proxyWebsockets = true;
-          };
-          # TODO(Dave): Stop using these, do something
-          # more intentional :)
-          serverAliases = wildcardDomains;
-          useACMEHost = nicponskiFamilyDomain;
-        };
-
-        "localhost" = {
-          # addSSL = true;
-          default = true;
-          locations."/" = {
-            return = "200 'Maybe try one of: \"${
-              lib.concatStringsSep " " (
-                # TODO(Dave): Iterate over all virtualHost domains + serverAliases
-                wildcardDomains
-                )
-            }\"'";
-          };
-          # useACMEHost = nicponskiFamilyDomain;
-        };
-
-      }) // (let
-        # TODO(Dave): This should be template-able with a matcher in the return rule
-        streamer = digit: {
-          "${digit}.${streamDomain}" = {
-            forceSSL = true;
-            listen = let
-              port = p: {
-                addr = "0.0.0.0";
-                port = p;
-              };
-            in [
-              # (port 80)
-              # TODO(Dave): This kinda sucks :(
-              (port acmePort)
-              ((port acmeTlsPort) // { ssl = true; })
-            ];
-            locations."/" = {
-              return = "301 https://10-69-0-${digit}.519b6502d940.stremio.rocks:12470";
-            };
-            useACMEHost = "${streamDomain}";
-          };
-        };
-      in (streamer "1") // (streamer "2")
-      );
-    };
-
-    prometheus = {
-      enable = true;
-      enableReload = true;
-      exporters = {
-        node = {
-          enable = true;
-          enabledCollectors = [ ];
-          port = 9002;
-        };
-        process = {
-          enable = true;
-          extraFlags = ["--debug"];
-          settings.process_names = [
-            # Remove nix store path from process name
-            {
-              name = "{{.Matches.Wrapped}} {{ .Matches.Args }}";
-              cmdline = [ "^/nix/store[^ ]*/(?P<Wrapped>[^ /]*) (?P<Args>.*)" ];
-            }
-          ];
-        };
+        serverName = stitchpiDomain;
       };
-      extraFlags = [
-        "--storage.tsdb.retention.size=1GB"
-        #"--web.enable-admin-api"  # TODO(dave): Remove this after deleting the series
+
+      "${stitchpiDomain}" = {
+        addSSL = true;
+        locations."/" = {
+          #extraConfig = ''
+          #  add_header 'Access-Control-Allow-Origin' "*" always;
+          #'';
+          proxyPass = "http://127.0.0.1:11470";  # Stremio
+          proxyWebsockets = true;
+        };
+        # TODO(Dave): Remove the original perhaps?
+        useACMEHost = nicponskiFamilyDomain; #stitchpiDomain;
+      };
+    # Below line and let binding are WIP
+    } // (let
+      wildcardDomains = [
+        "wildcard.${nicponskiFamilyDomain}"
+        "${config.services.grafana.domain}"
       ];
-      globalConfig = {
-        scrape_interval = "15s";
-      };
-      port = 9001;
-      retentionTime = "90d";
+    in {
+      "wildcard.${nicponskiFamilyDomain}" = {
+        addSSL = true;
 
-      # TODO(Dave): Currently these are grouped by source.  Perhaps grouping
-      # by "logical metric type" would make more sense, as this could allow
-      # shared configuration for things like label replacement in contexts
-      # where is makes sense to share these (timeseries sets of the same metrics
-      # from multiple sources, for instance all "iptables"/"ip6tables"
-      # metrics) and use common relabeling or rewriting rules on them alone.
-      scrapeConfigs = let
-        mkTargets = host: lib.mapAttrsToList (_: v: "${host}:${toString v}");
-        relabels = {
-          iptables.version = [{
-            source_labels = ["__name__"];
-            regex = "iptables_.*";
-            target_label = "ip_stack";
-            replacement = "IPv4";
-          } {
-            source_labels = ["__name__"];
-            regex = "ip6tables_.*";
-            target_label = "ip_stack";
-            replacement = "IPv6";
-          }];
-          iptables.version_merge = [{
-            source_labels = ["__name__"];
-            regex = "ip(?:|6)tables_(.*)";
-            target_label = "__name__";
-            replacement = "merged_iptables_$1";
-          }];
+        locations."/" = {
+          extraConfig = ''
+            proxy_set_header Host $host;
+          '';
+          proxyPass = "http://127.0.0.1:${toString config.services.grafana.port}";
+          proxyWebsockets = true;
         };
-      in [{
-        job_name = "local-node";
-        metric_relabel_configs = [] ++
-          relabels.iptables.version ++
-          relabels.iptables.version_merge;
-        static_configs = [{
-          targets = let
-            s = config.services;
-            pe = s.prometheus.exporters;
-          in mkTargets "127.0.0.1" {
-            node = pe.node.port;
-            process = pe.process.port;
-            iptables = s.iptables_exporter.port;
-            prometheus = s.prometheus.port;
+        # TODO(Dave): Stop using these, do something
+        # more intentional :)
+        serverAliases = wildcardDomains;
+        useACMEHost = nicponskiFamilyDomain;
+      };
+
+      "localhost" = {
+        # addSSL = true;
+        default = true;
+        locations."/" = {
+          return = "200 'Maybe try one of: \"${
+            lib.concatStringsSep " " (
+              # TODO(Dave): Iterate over all virtualHost domains + serverAliases
+              wildcardDomains
+              )
+          }\"'";
+        };
+        # useACMEHost = nicponskiFamilyDomain;
+      };
+
+    }) // (let
+      # TODO(Dave): This should be template-able with a matcher in the return rule
+      streamer = digit: {
+        "${digit}.${streamDomain}" = {
+          forceSSL = true;
+          listen = let
+            port = p: {
+              addr = "0.0.0.0";
+              port = p;
+            };
+          in [
+            # (port 80)
+            # TODO(Dave): This kinda sucks :(
+            (port acmePort)
+            ((port acmeTlsPort) // { ssl = true; })
+          ];
+          locations."/" = {
+            return = "301 https://10-69-0-${digit}.519b6502d940.stremio.rocks:12470";
           };
-          labels.source = "lidjamoypi";
-        }];
-      } {
-        job_name = "router";
-        metric_relabel_configs = [] ++
-          relabels.iptables.version ++
-          relabels.iptables.version_merge;
-        static_configs = [{
-          targets = mkTargets "10.68.0.1" {
-            # Would really love a way to magically discover these!
-            node = 9100;
-            process = 9101;
-            iptables = 9102;
-          };
-          labels.source = "rt-ax88u";
-        }];
-      }];
+          useACMEHost = "${streamDomain}";
+        };
+      };
+    in (streamer "1") // (streamer "2")
+    );
+  };
+
+  services.prometheus = {
+    enable = true;
+    enableReload = true;
+    exporters = {
+      node = {
+        enable = true;
+        enabledCollectors = [ ];
+        port = 9002;
+      };
+      process = {
+        enable = true;
+        extraFlags = ["--debug"];
+        settings.process_names = [
+          # Remove nix store path from process name
+          {
+            name = "{{.Matches.Wrapped}} {{ .Matches.Args }}";
+            cmdline = [ "^/nix/store[^ ]*/(?P<Wrapped>[^ /]*) (?P<Args>.*)" ];
+          }
+        ];
+      };
     };
+    extraFlags = [
+      "--storage.tsdb.retention.size=1GB"
+      #"--web.enable-admin-api"  # TODO(dave): Remove this after deleting the series
+    ];
+    globalConfig = {
+      scrape_interval = "15s";
+    };
+    port = 9001;
+    retentionTime = "90d";
+
+    # TODO(Dave): Currently these are grouped by source.  Perhaps grouping
+    # by "logical metric type" would make more sense, as this could allow
+    # shared configuration for things like label replacement in contexts
+    # where is makes sense to share these (timeseries sets of the same metrics
+    # from multiple sources, for instance all "iptables"/"ip6tables"
+    # metrics) and use common relabeling or rewriting rules on them alone.
+    scrapeConfigs = let
+      mkTargets = host: lib.mapAttrsToList (_: v: "${host}:${toString v}");
+      relabels = {
+        iptables.version = [{
+          source_labels = ["__name__"];
+          regex = "iptables_.*";
+          target_label = "ip_stack";
+          replacement = "IPv4";
+        } {
+          source_labels = ["__name__"];
+          regex = "ip6tables_.*";
+          target_label = "ip_stack";
+          replacement = "IPv6";
+        }];
+        iptables.version_merge = [{
+          source_labels = ["__name__"];
+          regex = "ip(?:|6)tables_(.*)";
+          target_label = "__name__";
+          replacement = "merged_iptables_$1";
+        }];
+      };
+    in [{
+      job_name = "local-node";
+      metric_relabel_configs = [] ++
+        relabels.iptables.version ++
+        relabels.iptables.version_merge;
+      static_configs = [{
+        targets = let
+          s = config.services;
+          pe = s.prometheus.exporters;
+        in mkTargets "127.0.0.1" {
+          node = pe.node.port;
+          process = pe.process.port;
+          iptables = s.iptables_exporter.port;
+          prometheus = s.prometheus.port;
+        };
+        labels.source = "lidjamoypi";
+      }];
+    } {
+      job_name = "router";
+      metric_relabel_configs = [] ++
+        relabels.iptables.version ++
+        relabels.iptables.version_merge;
+      static_configs = [{
+        targets = mkTargets "10.68.0.1" {
+          # Would really love a way to magically discover these!
+          node = 9100;
+          process = 9101;
+          iptables = 9102;
+        };
+        labels.source = "rt-ax88u";
+      }];
+    }];
+  };
 
     # Enable the OpenSSH daemon.
-    openssh = {
-      ports = [ 22 62832 ];
-      enable = true;
-    };
+  services.openssh = {
+    ports = [ 22 62832 ];
+    enable = true;
+  };
 
     # Enable CUPS to print documents.
-    # printing.enable = true;
+    # services.printing.enable = true;
 
-    x2goserver = {
+  services.x2goserver = {
+    enable = true;
+    superenicer.enable = true;
+  };
+
+  services.xserver = {
+    autorun = true;
+    # Enable the X11 windowing system.
+    enable = true;
+    exportConfiguration = true;
+    inputClassSections = [
+      # TODO(Dave): Move this into an X11-specific location perhaps?
+      (builtins.readFile ./joystick-input.conf)
+    ];
+    modules = with pkgs.xorg; [
+      xf86inputjoystick
+    ];
+    resolutions = [
+      # 16:9 resolutions
+      { x = 1280; y = 720; }  # Best for emulator performance :(
+      { x = 1920; y = 1080; }  # HDMI tv preferred resolution
+
+      # 4:3 resolutions
+      { x = 1024; y = 768; }
+      { x = 800; y = 600; }
+      { x = 1600; y = 1200; }
+      { x = 640; y = 480; }
+    ];
+
+    layout = "us";
+    videoDrivers = [ /*"fbdev"*/ "modesetting" "fbdev" ];
+
+    # xkbOptions = "eurosign:e";
+
+    # Enable touchpad support.
+    # libinput.enable = true;
+
+    # Enable the KDE Desktop Environment.
+    # displayManager.sddm.enable = true;
+    # desktopManager.plasma5.enable = true;
+    #desktopManager.xfce.enable = true;
+
+    # Incompatible with x2go server :'(
+    desktopManager.lxqt.enable = true;
+
+    # https://wiki.x2go.org/doku.php/doc:de-compat
+    # desktopManager.mate.enable = true;
+    # desktopManager.retroarch.enable = true;
+    # desktopManager.retroarch.package = (builtins.head myRetroarch);
+    # desktopManager.xterm.enable = true;
+
+    displayManager.autoLogin = {
       enable = true;
-      superenicer.enable = true;
+      user = "dave";
     };
+    #displayManager.sddm.enable = true;
+    displayManager.lightdm.enable = true;
 
-    xserver = {
-      autorun = true;
-      # Enable the X11 windowing system.
-      enable = true;
-      exportConfiguration = true;
-      inputClassSections = [
-        # TODO(Dave): Move this into an X11-specific location perhaps?
-        (builtins.readFile ./joystick-input.conf)
-      ];
-      modules = with pkgs.xorg; [
-        xf86inputjoystick
-      ];
-      resolutions = [
-        # 16:9 resolutions
-        { x = 1280; y = 720; }  # Best for emulator performance :(
-        { x = 1920; y = 1080; }  # HDMI tv preferred resolution
+    # Disable the annoying "screen blanking" / kill HDMI signal that was
+    # happening in the middle of my games, every 10 minutes.
+    serverFlagsSection = ''
+      Option "BlankTime" "0"
+      # TODO(Dave): Are the below useful?
+      Option "StandbyTime" "0"
+      Option "SuspendTime" "0"
+      Option "OffTime" "0"
+    '';
 
-        # 4:3 resolutions
-        { x = 1024; y = 768; }
-        { x = 800; y = 600; }
-        { x = 1600; y = 1200; }
-        { x = 640; y = 480; }
-      ];
+    # TODO(dave): Maybe get rid of this if it doesn't help?
+    updateDbusEnvironment = true;
 
-      layout = "us";
-      videoDrivers = [ /*"fbdev"*/ "modesetting" "fbdev" ];
-
-      # xkbOptions = "eurosign:e";
-
-      # Enable touchpad support.
-      # libinput.enable = true;
-
-      # Enable the KDE Desktop Environment.
-      # displayManager.sddm.enable = true;
-      # desktopManager.plasma5.enable = true;
-      #desktopManager.xfce.enable = true;
-
-      # Incompatible with x2go server :'(
-      desktopManager.lxqt.enable = true;
-
-      # https://wiki.x2go.org/doku.php/doc:de-compat
-      # desktopManager.mate.enable = true;
-      # desktopManager.retroarch.enable = true;
-      # desktopManager.retroarch.package = (builtins.head myRetroarch);
-      # desktopManager.xterm.enable = true;
-
-      displayManager.autoLogin = {
-        enable = true;
-        user = "dave";
-      };
-      #displayManager.sddm.enable = true;
-      displayManager.lightdm.enable = true;
-
-      # Disable the annoying "screen blanking" / kill HDMI signal that was
-      # happening in the middle of my games, every 10 minutes.
-      serverFlagsSection = ''
-        Option "BlankTime" "0"
-        # TODO(Dave): Are the below useful?
-        Option "StandbyTime" "0"
-        Option "SuspendTime" "0"
-        Option "OffTime" "0"
-      '';
-
-      # TODO(dave): Maybe get rid of this if it doesn't help?
-      updateDbusEnvironment = true;
-
-      windowManager."2bwm".enable = true;
-    };
-    fractalart = {
-      enable = true;  # Goes w/ xserver
-      width = 1280;
-      height = 720;
-    };
+    windowManager."2bwm".enable = true;
+  };
+  services.fractalart = {  # Goes w/ xserver, hence not alphabetized
+    enable = true;
+    width = 1280;
+    height = 720;
   };
   # TODO(Dave): Find a way to combine this with the `services.` part. :(
+  # Disable the screensaver.
   environment.lxqt.excludePackages = [ pkgs.xscreensaver ];
 
   # Enable sound.
