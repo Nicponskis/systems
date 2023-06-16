@@ -516,6 +516,11 @@ in {
     port = 9102;
   };
 
+  # TODO(Dave): This is cool but the rpi is underpowered for it
+  # services.jellyfin.enable = true;
+  # #services.jellyfin.openFirewall = true;
+  # networking.firewall.allowedUDPPorts = [ 1900 7359 ];
+
   services.nginx = {
     enable = true;
     recommendedGzipSettings = true;
