@@ -119,6 +119,11 @@
                 };
               });
             })
+
+            (final: prev: {
+              # TODO(Dave): This will be overly brittle on system type.
+              changedetection-io = inputs.latest.legacyPackages.aarch64-linux.changedetection-io;
+            })
           ];
         };
         nixpkgs-darwin-stable = {

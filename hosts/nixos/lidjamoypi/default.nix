@@ -8,15 +8,16 @@ let
   # TODO(Dave): Move these into an attrset perhaps, for name scoping
   acmePort = 28888;
   acmeTlsPort = acmePort + 1;
-  nicponskiFamilyDomain = "nicponski.family";
   acmeChallengePrefix = "_acme-challenge";
+  changedetection-io-port = 5221;
+  foopiDomain = "foo.${stitchpiDomain}";
+  nasAddress = "10.68.0.1";
   nicponskiChallengeDomain = "${acmeChallengePrefix}.${nicponskiFamilyDomain}";
   nicponskiDevDomain = "nicponski.dev";
+  nicponskiFamilyDomain = "nicponski.family";
   stitchpiDomain = "stitchpi.${nicponskiFamilyDomain}";
-  foopiDomain = "foo.${stitchpiDomain}";
   streamDomain = "stream.${nicponskiFamilyDomain}";
   streamChallengeDomain = "${acmeChallengePrefix}.${streamDomain}";
-  nasAddress = "10.68.0.1";
 
   myRetroarch = (
       let
@@ -271,7 +272,11 @@ in {
 
 
     # Open ports in the firewall.
-    firewall.allowedTCPPorts = [ 53 80 443 acmePort acmeTlsPort ];
+    firewall.allowedTCPPorts = [
+      53 80 443
+      acmePort acmeTlsPort
+      changedetection-io-port
+    ];
     # firewall.allowedUDPPorts = [ ... ];
     firewall.allowedUDPPortRanges = [
       { from = 53; to = 53; }
@@ -453,6 +458,22 @@ in {
         extraConfig = "allow-update { key rfc2136key.${nicponskiChallengeDomain}; };";
       }
     ];
+  };
+
+  # Watch webpages for changes
+  services.changedetection-io = {
+    enable = true;
+
+    baseURL = "https://sitechanges.dave.nicponski.dev:${toString (10000 + changedetection-io-port)}/";
+    behindProxy = false;
+    # chromePort = 4444;  # defaults to 4444
+    # datastorePath = "/var/lib/changedetection-io";
+    environmentFile = pkgs.writeText "chagedetection-io_environment" ''
+      HIDE_REFERER=true
+    '';
+    listenAddress = "0.0.0.0";  # Expose externally as well.  Defaults to `localhost`.
+    port = changedetection-io-port;  # Defaults to port 5000
+    # webDriverSupport = true;  # Enable to use headless Chromium for rendering
   };
 
   services.ddclient = {
