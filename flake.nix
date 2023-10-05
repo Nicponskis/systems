@@ -122,7 +122,20 @@
 
             (final: prev: {
               # TODO(Dave): This will be overly brittle on system type.
-              changedetection-io = inputs.latest.legacyPackages.aarch64-linux.changedetection-io;
+              changedetection-io = let
+                pkgs = inputs.latest.legacyPackages.aarch64-linux;
+                pypkgs = pkgs.python3Packages;
+              in pkgs.changedetection-io.overrideAttrs (self: super: rec {
+                version = "0.45.3";
+                src = super.src.override {
+                  rev = version;
+                  sha256 = "sha256-QTkkMFGyEGSakvFCiJ36Xr3IiG9K7GDy2dpNGWjUngs=";
+                };
+                propagatedBuildInputs = super.propagatedBuildInputs ++ [
+                  pypkgs.flask-paginate
+
+                ];
+              });
             })
           ];
         };
