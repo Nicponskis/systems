@@ -19,6 +19,8 @@ let
   streamDomain = "stream.${nicponskiFamilyDomain}";
   streamChallengeDomain = "${acmeChallengePrefix}.${streamDomain}";
 
+  portForwarded = port: (10000 + port);
+
   myRetroarch = (
       let
         retroArchWith = cores: [ (pkgs.retroarch.override {cores = cores;}) ] ++ cores;
@@ -275,7 +277,7 @@ in {
     firewall.allowedTCPPorts = [
       53 80 443
       acmePort acmeTlsPort
-      changedetection-io-port
+      (portForwarded changedetection-io-port)
     ];
     # firewall.allowedUDPPorts = [ ... ];
     firewall.allowedUDPPortRanges = [
@@ -464,14 +466,14 @@ in {
   services.changedetection-io = {
     enable = true;
 
-    baseURL = "https://sitechanges.dave.nicponski.dev:${toString (10000 + changedetection-io-port)}/";
+    baseURL = "https://sitechanges.dave.nicponski.dev:${toString (portForwarded changedetection-io-port)}/";
     behindProxy = false;
     # chromePort = 4444;  # defaults to 4444
     # datastorePath = "/var/lib/changedetection-io";
     environmentFile = pkgs.writeText "chagedetection-io_environment" ''
       HIDE_REFERER=true
     '';
-    listenAddress = "0.0.0.0";  # Expose externally as well.  Defaults to `localhost`.
+    # listenAddress = "0.0.0.0";  # Expose externally as well.  Defaults to `localhost`.
     port = changedetection-io-port;  # Defaults to port 5000
     # webDriverSupport = true;  # Enable to use headless Chromium for rendering
   };
@@ -546,7 +548,7 @@ in {
     enable = true;
     recommendedGzipSettings = true;
     recommendedOptimisation = true;
-    #recommendedProxySettings = true;
+    recommendedProxySettings = true;
     recommendedTlsSettings = true;
 
     virtualHosts = {
@@ -585,6 +587,22 @@ in {
         # TODO(Dave): Remove the original perhaps?
         useACMEHost = nicponskiFamilyDomain; #stitchpiDomain;
       };
+
+      # Needed because `.dev` TLD auto-pins certs via HSTS.  Grrrr.
+      "sitechanges.dave.nicponski.dev" = {
+        enableACME = true;
+        forceSSL = true;
+        listen = [{
+          addr = "0.0.0.0";
+          port = portForwarded changedetection-io-port;
+          ssl = true;
+        }];
+        locations."/" = {
+          proxyPass = "http://localhost:${toString changedetection-io-port}";
+          proxyWebsockets = true;
+        };
+      };
+
     # Below line and let binding are WIP
     } // (let
       wildcardDomains = [
