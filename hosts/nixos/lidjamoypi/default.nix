@@ -475,7 +475,7 @@ in {
     '';
     # listenAddress = "0.0.0.0";  # Expose externally as well.  Defaults to `localhost`.
     port = changedetection-io-port;  # Defaults to port 5000
-    # webDriverSupport = true;  # Enable to use headless Chromium for rendering
+    webDriverSupport = true;  # Enable to use headless Chromium for rendering
   };
 
   services.ddclient = {
