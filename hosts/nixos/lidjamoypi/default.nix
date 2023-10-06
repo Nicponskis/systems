@@ -8,6 +8,8 @@ let
   # TODO(Dave): Move these into an attrset perhaps, for name scoping
   acmePort = 28888;
   acmeTlsPort = acmePort + 1;
+  grafanaPort = 14080;
+  grafanaTlsPort = 14443;
   acmeChallengePrefix = "_acme-challenge";
   changedetection-io-port = 5221;
   foopiDomain = "foo.${stitchpiDomain}";
@@ -277,6 +279,7 @@ in {
     firewall.allowedTCPPorts = [
       53 80 443
       acmePort acmeTlsPort
+      grafanaPort grafanaTlsPort
       (portForwarded changedetection-io-port)
     ];
     # firewall.allowedUDPPorts = [ ... ];
@@ -624,8 +627,18 @@ in {
         "${config.services.grafana.domain}"
       ];
     in {
-      "wildcard.${nicponskiFamilyDomain}" = {
+      "grafana.${nicponskiFamilyDomain}" = {
         addSSL = true;
+
+        # TODO(Dave): This is copied from the acme stanza.
+        listen = [ {
+          addr = "0.0.0.0";
+          port = grafanaPort;
+        } {
+          addr = "0.0.0.0";
+          port = grafanaTlsPort;
+          ssl = true;
+        }];
 
         locations."/" = {
           extraConfig = ''
