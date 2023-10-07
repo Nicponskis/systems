@@ -347,6 +347,15 @@ in {
         outputHash = "1p7vn2hfwca6w69jhw5zq70w44ji8mdnibm1z959aalax6ndy146";
       });
     })
+
+    # Patch changedetection-io to not phone home.
+    (final: prev: {
+      changedetection-io = prev.changedetection-io.overrideAttrs (ffinal: pprev: {
+        patches = (pprev.patches or []) ++ [
+          ./patches/0001-WIP-Elide-the-phone-home-stuff.patch
+        ];
+      });
+    })
   ];
 
 
