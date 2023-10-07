@@ -477,6 +477,11 @@ in {
     port = changedetection-io-port;  # Defaults to port 5000
     webDriverSupport = true;  # Enable to use headless Chromium for rendering
   };
+  # Tacky fix for using the docker image on ARM
+  virtualisation.oci-containers.containers =
+    lib.mkIf config.services.changedetection-io.webDriverSupport {
+      changedetection-io-webdriver.image = lib.mkForce "seleniarm/standalone-chromium";
+    };
 
   services.ddclient = {
     enable = true;
