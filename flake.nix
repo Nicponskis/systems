@@ -122,18 +122,15 @@
 
             (final: prev: {
               # TODO(Dave): This will be overly brittle on system type.
-              changedetection-io = let
-                pkgs = inputs.latest.legacyPackages.aarch64-linux;
-                pypkgs = pkgs.python3Packages;
-              in pkgs.changedetection-io.overrideAttrs (self: super: rec {
+              changedetection-io = prev.changedetection-io.overrideAttrs (self: super: rec {
                 version = "0.45.3";
-                src = super.src.override {
+                name = "${super.pname}-${version}";
+                src = super.src.overrideAttrs (_: _: {
                   rev = version;
                   sha256 = "sha256-QTkkMFGyEGSakvFCiJ36Xr3IiG9K7GDy2dpNGWjUngs=";
-                };
+                });
                 propagatedBuildInputs = super.propagatedBuildInputs ++ [
-                  pypkgs.flask-paginate
-
+                  prev.python3Packages.flask-paginate
                 ];
               });
             })
@@ -196,6 +193,7 @@
         imports = [(digga.lib.importHosts ./hosts/nixos)];
         hosts = {
           # set host-specific properties here
+          arm-builder-west.system = "aarch64-linux";
           lidjamoypi.system = "aarch64-linux";
         };
         importables = rec {

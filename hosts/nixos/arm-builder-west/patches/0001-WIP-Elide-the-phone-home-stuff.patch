@@ -1,0 +1,25 @@
+From 9aa9bae0dbff4a09e06c38ce6b1fd2cbe5b73913 Mon Sep 17 00:00:00 2001
+From: Dave Nicponski <dave.nicponski@gmail.com>
+Date: Sat, 7 Oct 2023 17:49:24 -0400
+Subject: [PATCH] WIP - Elide the "phone home" stuff
+
+---
+ changedetectionio/__init__.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git ./changedetectionio/__init__.py ./changedetectionio/__init__.py
+index 972b2fa..b5410bd 100644
+--- ./changedetectionio/__init__.py
++++ ./changedetectionio/__init__.py
+@@ -1477,6 +1477,8 @@ def changedetection_app(config=None, datastore_o=None):
+
+ # Check for new version and anonymous stats
+ def check_for_new_version():
++    pass  # Skip the unnecessary "ET phone home" crap
++
+     import requests
+     import urllib3
+     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+--
+2.36.0
+
