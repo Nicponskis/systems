@@ -130,7 +130,7 @@
                   sha256 = "sha256-QTkkMFGyEGSakvFCiJ36Xr3IiG9K7GDy2dpNGWjUngs=";
                 });
                 propagatedBuildInputs = super.propagatedBuildInputs ++ [
-                  prev.python3Packages.flask-paginate
+                  # prev.python3Packages.flask-paginate
                 ];
               });
             })
