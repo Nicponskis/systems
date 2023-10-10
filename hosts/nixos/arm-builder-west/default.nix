@@ -50,17 +50,22 @@ in {
   ec2.efi = true;
 
   environment.systemPackages = with pkgs; [
+    # Essentials
     agenixCLI
     awscli
-    compsize  # btrfs compression stats
-    file
-    #gdb  # TODO(Dave): Reenable sans python
     gitMinimal  # TODO(Dave): Eliminate python here also
-    htop
     nix-portables.bootstrap
-    nix-tree # Help with space analysis
     s3backer
-    vims.minimalNormal
+  ] ++ [
+    # Really want
+    # compsize  # btrfs compression stats
+    # file
+    # htop
+    # nix-tree # Help with space analysis
+    # vims.minimalNormal
+  ] ++ [
+    # Nice to have...
+    #gdb  # TODO(Dave): Reenable sans python
   ];
 
   fileSystems."/" = lib.mkForce {
