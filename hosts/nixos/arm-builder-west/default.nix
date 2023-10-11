@@ -209,26 +209,26 @@ in {
     };
   };
 
-  # Watch webpages for changes
-  services.changedetection-io = {
-    enable = true;
+  # # Watch webpages for changes
+  # services.changedetection-io = {
+  #   enable = true;
 
-    baseURL = "https://sitechanges.dave.nicponski.dev:${toString (portForwarded changedetection-io-port)}/";
-    behindProxy = false;
-    # chromePort = 4444;  # defaults to 4444
-    datastorePath = "/mnt/s3fs/changedetection-io/data";
-    environmentFile = pkgs.writeText "chagedetection-io_environment" ''
-      HIDE_REFERER=true
-    '';
-    # listenAddress = "0.0.0.0";  # Expose externally as well.  Defaults to `localhost`.
-    port = changedetection-io-port;  # Defaults to port 5000
-    webDriverSupport = true;  # Enable to use headless Chromium for rendering
-  };
-  # Tacky fix for using the docker image on ARM
-  virtualisation.oci-containers.containers =
-    lib.mkIf config.services.changedetection-io.webDriverSupport {
-      changedetection-io-webdriver.image = lib.mkForce "seleniarm/standalone-chromium";
-    };
+  #   baseURL = "https://sitechanges.dave.nicponski.dev:${toString (portForwarded changedetection-io-port)}/";
+  #   behindProxy = false;
+  #   # chromePort = 4444;  # defaults to 4444
+  #   datastorePath = "/mnt/s3fs/changedetection-io/data";
+  #   environmentFile = pkgs.writeText "chagedetection-io_environment" ''
+  #     HIDE_REFERER=true
+  #   '';
+  #   # listenAddress = "0.0.0.0";  # Expose externally as well.  Defaults to `localhost`.
+  #   port = changedetection-io-port;  # Defaults to port 5000
+  #   webDriverSupport = true;  # Enable to use headless Chromium for rendering
+  # };
+  # # Tacky fix for using the docker image on ARM
+  # virtualisation.oci-containers.containers =
+  #   lib.mkIf config.services.changedetection-io.webDriverSupport {
+  #     changedetection-io-webdriver.image = lib.mkForce "seleniarm/standalone-chromium";
+  #   };
 
   services.ddclient = {
     enable = true;
