@@ -139,6 +139,10 @@ in {
     ];
   };
 
+  # These are huge!  Do we actually NEED them?  The non-flake system config seems
+  # like it didn't include these at all!
+  hardware.enableRedistributableFirmware = false;
+
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [
     (portForwarded changedetection-io-port)
