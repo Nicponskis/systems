@@ -280,7 +280,7 @@ in {
       53 80 443
       acmePort acmeTlsPort
       grafanaPort grafanaTlsPort
-      (portForwarded changedetection-io-port)
+      # (portForwarded changedetection-io-port)
     ];
     # firewall.allowedUDPPorts = [ ... ];
     firewall.allowedUDPPortRanges = [
@@ -476,7 +476,7 @@ in {
 
   # Watch webpages for changes
   services.changedetection-io = {
-    enable = true;
+    # enable = true;
 
     baseURL = "https://sitechanges.dave.nicponski.dev:${toString (portForwarded changedetection-io-port)}/";
     behindProxy = false;
