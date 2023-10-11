@@ -213,6 +213,31 @@ in {
     };
   };
 
+  security.sudo = {
+    extraRules = [
+      {
+        users = ["${config.users.users."pibuilder".name}"];
+        commands = let
+          full = re: "^${re}$";
+          sw = bin: "/run/current-system/sw/bin/${bin}";
+          profileRE = "/nix/var/nix/profiles/system(-profiles/[^/]+)?";
+          systemRE = "/nix/store/[a-zA-Z0-9]{32}-nixos-system-${config.system.name}-[^/]+";
+          switchRE = "${systemRE}/bin/switch-to-configuration";
+          actionRE = "switch|boot|test|dry-activate";
+          nopass = command: {
+            inherit command;
+            options = [ "NOPASSWD" "LOG_INPUT" "LOG_OUTPUT" ];
+          };
+          in [
+            (nopass "${sw "nix-env"} ${full "-p ${profileRE} --set ${systemRE}"}")
+            (nopass "${sw "nix-env"} ${full "--rollback -p ${profileRE}"}")
+            (nopass "${sw "nix-env"} ${full "-p ${profileRE} --list-generations"}")
+            (nopass "${full switchRE} ${full actionRE}")
+          ];
+      }
+    ];
+  };
+
   # # Watch webpages for changes
   # services.changedetection-io = {
   #   enable = true;
