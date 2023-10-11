@@ -151,6 +151,12 @@ in {
     persistent = true;
     randomizedDelaySec = "3600sec";
   };
+
+  # Shrink this system closure!!  It appears that all inputs
+  # to the flake will be included by default.
+  # TODO(Dave): Maybe include just the nixpkgs one?
+  nix.registry = lib.mkForce { };
+
   nix.settings.experimental-features = ["nix-command" "flakes"];
   nix.settings.trusted-users = ["@wheel" "pibuilder"];
 
