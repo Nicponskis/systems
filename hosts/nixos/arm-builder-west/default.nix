@@ -2,9 +2,9 @@
 let
   agenixCLI = pkgs.age;
 
-  aws_public_ip = let
-    script = pkgs.callPackage ./aws_public_ip.nix { inherit secrets; };
-  in "${script}/bin/aws_public_ip";
+  # aws_public_ip = let
+  #   script = pkgs.callPackage ./aws_public_ip.nix { inherit secrets; };
+  # in "${script}/bin/aws_public_ip";
 
   changedetection-io-port = 5221;
 
@@ -282,33 +282,33 @@ in {
   system.stateVersion = "22.11"; # don't change unless nixos release notes say to do so!!
 
   systemd.services = {
-    # TODO(Dave): Move this to a module!  (and get it to work again on shutdown rather than reboot!!)
-    "release-public-ip" = {
-      description = "Release any public IP address";
-      after = ["network-online.target" "nix-daemon.service"];
-      #environment.NIX_PATH = "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos";
-      #path = with pkgs; [ awscli bashInteractive curl ];
-      requires = ["network-online.target"];
-      restartIfChanged = false;
-      startLimitBurst = 3;
-      startLimitIntervalSec = 60;
-      #wantedBy = ["multi-user.target"];
-      wantedBy = ["halt.target" "poweroff.target" "shutdown.target"];
-      wants = [ "nix-daemon.service"];
+    # # TODO(Dave): Move this to a module!  (and get it to work again on shutdown rather than reboot!!)
+    # "release-public-ip" = {
+    #   description = "Release any public IP address";
+    #   after = ["network-online.target" "nix-daemon.service"];
+    #   #environment.NIX_PATH = "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos";
+    #   #path = with pkgs; [ awscli bashInteractive curl ];
+    #   requires = ["network-online.target"];
+    #   restartIfChanged = false;
+    #   startLimitBurst = 3;
+    #   startLimitIntervalSec = 60;
+    #   #wantedBy = ["multi-user.target"];
+    #   wantedBy = ["halt.target" "poweroff.target" "shutdown.target"];
+    #   wants = [ "nix-daemon.service"];
 
-      serviceConfig = {
-        #ExecStart = "/run/current-system/sw/bin/echo Nothing to do at startup";
-        ExecStart = "${aws_public_ip} drop";
-        #ExecStop = "${aws_public_ip} drop";
-        Group = "awscli";
-        RemainAfterExit = true;
-        #StandardError = "journal+console";
-        StandardError = "journal";
-        StandardOutput = "journal";
-        Type = "oneshot";
-        User = "awscli";
-      };
-    };
+    #   serviceConfig = {
+    #     #ExecStart = "/run/current-system/sw/bin/echo Nothing to do at startup";
+    #     ExecStart = "${aws_public_ip} drop";
+    #     #ExecStop = "${aws_public_ip} drop";
+    #     Group = "awscli";
+    #     RemainAfterExit = true;
+    #     #StandardError = "journal+console";
+    #     StandardError = "journal";
+    #     StandardOutput = "journal";
+    #     Type = "oneshot";
+    #     User = "awscli";
+    #   };
+    # };
   };
 
   systemd.tmpfiles.rules = [
