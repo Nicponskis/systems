@@ -205,6 +205,14 @@ in {
         ];
       });
     })
+
+    (final: prev: {
+      nix = prev.nix.overrideAttrs (ffinal: pprev: {
+        patches = (pprev.patches or []) ++ [
+          ./patches/0001-Stop-hard-linking-non-directory-inputs-as-this-will-.patch
+        ];
+      });
+    })
   ];
 
   security.acme = {
