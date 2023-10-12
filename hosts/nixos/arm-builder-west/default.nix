@@ -237,6 +237,8 @@ in {
             (nopass "${sw "nix-env"} ${full "--rollback -p ${profileRE}"}")
             (nopass "${sw "nix-env"} ${full "-p ${profileRE} --list-generations"}")
             (nopass "${full switchRE} ${full actionRE}")
+
+            (nopass "${sw "htop"}")  # may as well :)
           ];
       }
     ];
