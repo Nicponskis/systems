@@ -54,6 +54,7 @@ in {
     agenixCLI
     awscli
     gitMinimal  # TODO(Dave): Eliminate python here also
+    mosh
     nix-portables.bootstrap
     s3backer
   ] ++ [
@@ -146,6 +147,9 @@ in {
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [
     (portForwarded changedetection-io-port)
+  ];
+  networking.firewall.allowedUDPPortRanges = [
+    { from = 60000; to = 61000; } # mosh
   ];
   networking.hostName = "arm-builder-west";
 
