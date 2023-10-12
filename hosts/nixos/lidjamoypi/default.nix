@@ -606,20 +606,20 @@ in {
         useACMEHost = nicponskiFamilyDomain; #stitchpiDomain;
       };
 
-      # Needed because `.dev` TLD auto-pins certs via HSTS.  Grrrr.
-      "sitechanges.dave.nicponski.dev" = {
-        enableACME = true;
-        forceSSL = true;
-        listen = [{
-          addr = "0.0.0.0";
-          port = portForwarded changedetection-io-port;
-          ssl = true;
-        }];
-        locations."/" = {
-          proxyPass = "http://localhost:${toString changedetection-io-port}";
-          proxyWebsockets = true;
-        };
-      };
+      # # Needed because `.dev` TLD auto-pins certs via HSTS.  Grrrr.
+      # "sitechanges.dave.nicponski.dev" = {
+      #   enableACME = true;
+      #   forceSSL = true;
+      #   listen = [{
+      #     addr = "0.0.0.0";
+      #     port = portForwarded changedetection-io-port;
+      #     ssl = true;
+      #   }];
+      #   locations."/" = {
+      #     proxyPass = "http://localhost:${toString changedetection-io-port}";
+      #     proxyWebsockets = true;
+      #   };
+      # };
 
     # Below line and let binding are WIP
     } // (let
