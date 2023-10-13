@@ -66,6 +66,13 @@
     fake-hwclock.inputs.nixpkgs.follows = "nixos";
     fake-hwclock.inputs.deploy-rs.follows = "deploy";
     fake-hwclock.inputs.home-manager.follows = "home";
+
+    nix-portable.url = "github:virusdave/nix-portable";
+    nix-portable.inputs.nixpkgs.follows = "nixos";
+    nix-portable.inputs.nix.inputs.nixpkgs.follows = "nixos";
+    # TODO(Dave): the `nix-portable.inputs.nix` input doesn't seem to
+    # be being used currently.  Perhaps remove it completely?
+
     # TODO(Dave): Handle the other transitive inputs for the above?
   };
 
@@ -78,6 +85,7 @@
     digga,
     fake-hwclock,
     home,
+    nix-portable,
     nixos,
     nixos-hardware,
     nur,
@@ -133,6 +141,16 @@
                   # prev.python3Packages.flask-paginate
                 ];
               });
+            })
+
+            (final: prev: {
+              nix = prev.nix.overrideAttrs (self: super: {
+                patches = (super.patches or []) ++ [
+                  ./pkgs/patches/0001-Stop-hard-linking-non-directory-inputs-as-this-will-.patch
+                ];
+              });
+
+              nix-portable = nix-portable.packages."${prev.system}".nix-portable;
             })
           ];
         };

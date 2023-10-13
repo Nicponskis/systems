@@ -55,7 +55,8 @@ in {
     awscli
     gitMinimal  # TODO(Dave): Eliminate python here also
     mosh
-    nix-portables.bootstrap
+    # nix-portables.bootstrap
+    nix-portable
     s3backer
   ] ++ [
     # Really want
