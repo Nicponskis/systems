@@ -147,9 +147,11 @@ in {
 
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [
+    53  # DNS
     (portForwarded changedetection-io-port)
   ];
   networking.firewall.allowedUDPPortRanges = [
+    { from = 53; to = 53; } # DNS
     { from = 60000; to = 61000; } # mosh
   ];
   networking.hostName = "arm-builder-west";
@@ -282,6 +284,14 @@ in {
   #   enable = true;
   #   gcDelay = "4h";
   # };
+
+  services.iodine = {
+    server = {
+      domain = "dns.proxy.dave.nicponski.dev";
+      ip = "10.0.0.1";
+      passwordFile = ./iodine-pw;  # TODO(Dave): FIXME
+    };
+  };
 
   services.nginx = {
     enable = true;
