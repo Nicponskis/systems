@@ -60,10 +60,10 @@ in {
     s3backer
   ] ++ [
     # Really want
-    compsize  # btrfs compression stats
+    #compsize  # btrfs compression stats
     file
     htop
-    nix-tree # Help with space analysis
+    #nix-tree # Help with space analysis
     vims.minimalNormal
   ] ++ [
     # Nice to have...
