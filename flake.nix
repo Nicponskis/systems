@@ -131,21 +131,6 @@
             })
 
             (final: prev: {
-              # TODO(Dave): This will be overly brittle on system type.
-              changedetection-io = prev.changedetection-io.overrideAttrs (self: super: rec {
-                version = "0.45.3";
-                name = "${super.pname}-${version}";
-                src = super.src.overrideAttrs (_: _: {
-                  rev = version;
-                  sha256 = "sha256-QTkkMFGyEGSakvFCiJ36Xr3IiG9K7GDy2dpNGWjUngs=";
-                });
-                propagatedBuildInputs = super.propagatedBuildInputs ++ [
-                  # prev.python3Packages.flask-paginate
-                ];
-              });
-            })
-
-            (final: prev: {
               nix = prev.nix.overrideAttrs (self: super: {
                 patches = (super.patches or []) ++ [
                   ./pkgs/patches/0001-Stop-hard-linking-non-directory-inputs-as-this-will-.patch
