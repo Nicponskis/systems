@@ -150,7 +150,11 @@
                 ];
               });
 
-              nix-portable = nix-portable.packages."${prev.system}".nix-portable;
+              nix-portable = let
+                  ps = nix-portable.packages;
+                  sys = ps."${prev.system}" or {};
+                  np = sys.nix-portable or null;
+                in np;
             })
           ];
         };
