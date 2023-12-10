@@ -205,6 +205,7 @@
           arm-builder-west.system = "aarch64-linux";
           lidjamoypi.system = "aarch64-linux";
           stagingfreshlybakednyc.system = "aarch64-linux";
+          wwwfreshlybakednyc.system = "aarch64-linux";
         };
         importables = rec {
           profiles =
