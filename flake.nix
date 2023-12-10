@@ -131,11 +131,11 @@
             })
 
             (final: prev: {
-              nix = prev.nix.overrideAttrs (self: super: {
-                patches = (super.patches or []) ++ [
-                  ./pkgs/patches/0001-Stop-hard-linking-non-directory-inputs-as-this-will-.patch
-                ];
-              });
+              # nix = prev.nix.overrideAttrs (self: super: {
+              #   patches = (super.patches or []) ++ [
+              #     ./pkgs/patches/0001-Stop-hard-linking-non-directory-inputs-as-this-will-.patch
+              #   ];
+              # });
 
               nix-portable = let
                   ps = nix-portable.packages;
