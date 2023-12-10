@@ -8,6 +8,15 @@
 }:
 
 let
+  secrets = with lib; (flip genAttrs) (n: {
+    plain = config.age.secrets.${n}.path;
+    cipher = ./secrets/${n}.age;
+  }) [
+    "inadyn-password"
+
+    "test-secret"
+  ];
+
   changedetection-io-port = 5000;
   freshlyBakedDomain = "freshlybaked.nyc";
   hostname = "stagingfreshlybakednyc";
@@ -36,6 +45,11 @@ in {
     # ./modules/inadyn.nix
     # ./modules/wordpressWithPluginState.nix
   ];
+
+  age.secrets = with lib; recursiveUpdate (mapAttrs (n: v: {file = v.cipher;}) secrets) {
+    # Per-secret overrides go here
+    inadyn-password.owner = "inadyn";  # what user does it run as?
+  };
 
   ec2.hvm = true;
   ec2.efi = true;
@@ -215,7 +229,7 @@ in {
 
       custom namecheap {
         username = freshlybaked.nyc
-        include("/etc/nixos/secrets/inadyn/password")
+        include("${secrets.inadyn-password.plain}")
         ddns-server = dynamicdns.park-your-domain.com
         ddns-path = "/update?domain=%u&password=%p&host=%h&ip=%i"
         hostname = { "staging" }
