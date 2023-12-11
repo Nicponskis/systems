@@ -22,6 +22,11 @@ in {
       '';
       example = "{duplicator = \"backups-dup-lite\";}";
     };
+    sites = mkOption {
+      default = {};
+      type = attrs;
+      # TODO(Dave): Don't be lazy here.
+    };
   };
 
   config = mkIf (sites != {}) (
@@ -62,7 +67,7 @@ in {
 
       services.wordpress.sites =
         lib.mapAttrs (k: v: (v // {
-          package = (withSymlinksForSite v.package k cfg.stateContentDirMapping);
+          package = (withSymlinksForSite (v.package or pkgs.wordpress) k cfg.stateContentDirMapping);
         })) sites;
       services.wordpress.webserver = cfg.webserver;
     }

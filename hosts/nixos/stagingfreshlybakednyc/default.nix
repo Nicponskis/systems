@@ -340,11 +340,13 @@ in {
       #####
       # Debugging stuff here...
       extraConfig = ''
-        define( 'WP_DEBUG', true );
-        define( 'WP_DEBUG_LOG', '/tmp/wp-errors.log' );
-        define( 'WP_DEBUG_DISPLAY', false );  # in-page rendering
         # @ini_set( 'display_errors', 1 );
       '';
+      settings = {
+        WP_DEBUG = true;
+        WP_DEBUG_LOG = "/tmp/wp-errors.log";
+        WP_DEBUG_DISPLAY = false;
+      };
       #####
 
       database = {
@@ -353,31 +355,39 @@ in {
         tablePrefix = args.dbTablePrefix;  # tablePrefix = "wp_fb_";
       };
 
-      plugins = with wpp.plugins; [
-        antispam-bee
-        async-javascript
-        # code-syntax-block
-        disable-xml-rpc
-        lightbox-photoswipe
-        merge-minify-refresh  # Possibly disable if it causes problems
-        opengraph  # For better embedded links in social media sites
-        simple-login-captcha
-        wp-fastest-cache  # Might want to modify .htaccess, perhaps needs manual help?
-        wp-statistics
-        wordpress-seo
-      ] ++ [
-        ##########
-        # Manually added items...
+      plugins = {
+        inherit (wpp.plugins)
+          antispam-bee
+          async-javascript
+          # code-syntax-block
+          disable-xml-rpc
+          lightbox-photoswipe
+          merge-minify-refresh  # Possibly disable if it causes problems
+          opengraph  # For better embedded links in social media sites
+          simple-login-captcha
+          wordpress-seo
+          wp-fastest-cache  # Might want to modify .htaccess, perhaps needs manual help?
+          wp-statistics
+        ;
+      } // {
+        inherit (wpp.plugins)
+          ##########
+          # Manually added items...
 
-        # Copmliance
-        age-gate  # TODO(Dave): Push this upstream.
+          # Compliance
+          age-gate  # TODO(Dave): Push this upstream.
 
-        # Site Backups
-        all-in-one-wp-migration
-        backup-backup
-        duplicator
-        updraftplus
-      ];
+          # Site Backups
+          all-in-one-wp-migration
+          backup-backup
+          duplicator
+          updraftplus
+        ;
+      };
+
+      themes = {
+        inherit (wpp.themes) twentytwentytwo twentytwentythree;
+      };
     });
   in rec {
     stateContentDirMapping.all-in-one-wb-migration = ai1Name; # "ai1wm-backups";
@@ -458,11 +468,9 @@ in {
 
   virtualisation.podman = {
     enable = true;
-    # TODO(Dave): These options only seem available in 23.05+
-    # autoPrune.enable = true;
-    # autoPrune.dates = "*-*-* *:00/15:00";
-    # defaultNetwork = { dns_enabled = true; };  # This seems to be the 23.05 version of dnsname.enable below
-    defaultNetwork.dnsname.enable = true;
+    autoPrune.enable = true;
+    autoPrune.dates = "*-*-* *:00/15:00";
+    defaultNetwork.settings.dns_enabled = true;
     dockerSocket.enable = true;
   };
 
