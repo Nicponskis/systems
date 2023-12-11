@@ -71,6 +71,7 @@ in {
     #hexyl
     htop
     inetutils
+    lsof
     ncdu
     silver-searcher
     viddy # better `watch`
@@ -219,32 +220,39 @@ in {
         tablePrefix = "wp_fb_";
       };
 
-      plugins = with wpp.plugins; [
-        antispam-bee
-        async-javascript
-        # code-syntax-block
-        disable-xml-rpc
-        lightbox-photoswipe
-        merge-minify-refresh  # Possibly disable if it causes problems
-        opengraph  # For better embedded links in social media sites
-        simple-login-captcha
-        wordpress-seo
-        wp-fastest-cache  # Might want to modify .htaccess, perhaps needs manual help?
-        wp-statistics
-      ] ++ [
-        ##########
-        # Manually added items...
+      plugins = {
+        inherit (wpp.plugins)
+          antispam-bee
+          async-javascript
+          # code-syntax-block
+          disable-xml-rpc
+          lightbox-photoswipe
+          merge-minify-refresh  # Possibly disable if it causes problems
+          opengraph  # For better embedded links in social media sites
+          simple-login-captcha
+          wordpress-seo
+          wp-fastest-cache  # Might want to modify .htaccess, perhaps needs manual help?
+          wp-statistics
+        ;
+      } // {
+        inherit (wpp.plugins)
+          ##########
+          # Manually added items...
 
-        # Copmliance
-        age-gate  # TODO(Dave): Push this upstream.
+          # Copmliance
+          age-gate  # TODO(Dave): Push this upstream.
 
-        # Site Backups
-        all-in-one-wp-migration
-        backup-backup
-        duplicator
-        # updraftplus
-      ];
+          # Site Backups
+          all-in-one-wp-migration
+          backup-backup
+          duplicator
+          # updraftplus
+        ;
+      };
+
+      themes = { inherit (wpp.themes) twentytwentytwo; };
     };
+
     webserver = "nginx";
   };
 
