@@ -69,6 +69,8 @@
 
     nix-portable.url = "github:virusdave/nix-portable";
     nix-portable.inputs.nixpkgs.follows = "nixos";
+    # Pin the below one; it's floating upstream for some unknown reason...
+    nix-portable.inputs.nix.url = "github:NixOS/nix/5c917c32048ef185ea0eec352c3505485aa3212c";
     nix-portable.inputs.nix.inputs.nixpkgs.follows = "nixos";
     # TODO(Dave): the `nix-portable.inputs.nix` input doesn't seem to
     # be being used currently.  Perhaps remove it completely?
