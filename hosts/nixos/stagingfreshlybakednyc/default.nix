@@ -152,6 +152,8 @@ in {
       pain-control
       resurrect
       sensible
+
+      tmux-thumbs
     ];
     terminal = "screen-256color";
   };
