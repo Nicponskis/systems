@@ -433,9 +433,10 @@ in {
     timerConfig.Unit = "restart-changedetection.service";
   };
 
-  swapDevices = [ {
-    device = "/dev/disk/by-uuid/716907b0-c867-4a0b-b2f6-ff3a9e26a6e1";
-  } ];
+  swapDevices = [
+    { device = "/dev/disk/by-uuid/716907b0-c867-4a0b-b2f6-ff3a9e26a6e1"; }  # 800MB
+    { device = "/dev/disk/by-uuid/1681190b-4f65-4ce0-9244-e6436a26735a"; }  # 1GB
+  ];
   system.stateVersion = "22.05";  # NB: Do not change this unless you KNOW what you're doing!
 
   # Add `dave` as a user.
