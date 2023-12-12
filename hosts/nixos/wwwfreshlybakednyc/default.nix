@@ -276,9 +276,10 @@ in {
   systemd.services.notify-system-power-cycle.serviceConfig.ExecStop =
     ''${notifyMe}/bin/notify "FYI: System (${hostname}) is apparently shutting down"'';
   
-  swapDevices = [ {
-    device = "/dev/disk/by-uuid/716907b0-c867-4a0b-b2f6-ff3a9e26a6e1";
-  } ];
+  swapDevices = [
+    { device = "/dev/disk/by-uuid/716907b0-c867-4a0b-b2f6-ff3a9e26a6e1"; }  # 800MB
+    { device = "/dev/disk/by-uuid/7a24fb96-5f0d-410f-b0d3-a38657824dbb"; }  # 1GB
+  ];
   system.stateVersion = "22.05";  # NB: Do not change this unless you KNOW what you're doing!
 
   systemd.tmpfiles.rules = [
