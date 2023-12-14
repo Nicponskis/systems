@@ -58,8 +58,8 @@ in {
     bashInteractive
   ];
   environment.shellAliases = {
-      l = "${pkgs.exa}/bin/exa -la --color=always";
-      ls = "${pkgs.exa}/bin/exa -a --color=always";
+      l = "${pkgs.eza}/bin/eza -la --color=always";
+      ls = "${pkgs.eza}/bin/eza -a --color=always";
 
       less = "less -R";
       LESS = "less -R --no-lessopen";
@@ -71,7 +71,7 @@ in {
     bashInteractive
     bat
     compsize # compression stats for btrfs
-    exa
+    eza
     fx
     gitMinimal
     #hexyl
@@ -138,7 +138,7 @@ in {
     # necessary system config (setup users, directories, etc) for us, even though we're
     # _actually_ using a containerized process for this (by disabling the systemd unit for
     # the nixos service).
-    (final: prev: { changedetection-io = pkgs.exa.man; })  # a TINY package, ~7KB
+    (final: prev: { changedetection-io = pkgs.eza.man; })  # a TINY package, ~7KB
   ];
 
   programs.mosh.enable = true;

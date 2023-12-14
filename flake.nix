@@ -98,7 +98,7 @@
     {
       inherit self inputs;
 
-      channelsConfig = {allowUnfree = true;};
+      # channelsConfig = {allowUnfree = true;};
 
       channels = {
         nixos = {
@@ -196,6 +196,9 @@
 
             # TODO(Dave): Would love to be able to put this into the host-specific location!
             fake-hwclock.nixosModules.fake-hwclock
+
+            # Hack fix for this: https://github.com/gytis-ivaskevicius/flake-utils-plus/pull/137
+            ({config, ...}: { config.nixpkgs.config = nixos.lib.mkForce {}; })
           ];
         };
 
