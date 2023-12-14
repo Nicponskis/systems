@@ -29,7 +29,7 @@ let
       'mailto://dave.nicponski:qlnllemibmyjccyv@gmail.com?from=Dave%20Alerts<dave.nicponski@gmail.com>&to=dave.nicponski@gmail.com'
   '';
 
-  makeSiteWriteable = let 
+  makeSiteWriteable = let
     site = "staging.${freshlyBakedDomain}";
     loc = config.services.nginx.virtualHosts."${site}".root;
   in pkgs.writeShellScriptBin "make-wordpress-site-writeable" ''
@@ -40,8 +40,8 @@ let
     chown wordpress:nginx ${loc}
   '';
 in {
-  imports = [ 
-    "${modulesPath}/virtualisation/amazon-image.nix" 
+  imports = [
+    "${modulesPath}/virtualisation/amazon-image.nix"
     # ./modules/inadyn.nix
     # ./modules/wordpressWithPluginState.nix
   ];
@@ -178,15 +178,15 @@ in {
       # Tacky fix for using the docker images on ARM
       changedetection-io.dependsOn = [ "changedetection-io-webdriver" ];
       changedetection-io.environment.WEBDRIVER_URL = "localhost:4444";
-      changedetection-io-webdriver.image = 
+      changedetection-io-webdriver.image =
         lib.mkForce "seleniarm/standalone-chromium";  # TODO(Dave): Pin version!
     })
     (lib.mkIf config.services.changedetection-io.playwrightSupport {
       changedetection-io.dependsOn = [ "changedetection-io-playwright" ];
-      changedetection-io.environment.PLAYWRIGHT_DRIVER_URL = 
+      changedetection-io.environment.PLAYWRIGHT_DRIVER_URL =
         "ws://localhost:4444/?stealth=1&--disable-web-security=true";
-      changedetection-io-playwright.image = 
-        lib.mkForce 
+      changedetection-io-playwright.image =
+        lib.mkForce
           # "browserless/chrome:arm64";  # Version pinned below
           "docker.io/browserless/chrome@sha256:84ff67d7976d9e7bcc08ced21479fa4cbb0063f5c514fb56d6fd2ddb98c6b350";
     })
@@ -257,8 +257,8 @@ in {
     # };
 
     virtualHosts."staging.${freshlyBakedDomain}" = {
-      basicAuth = { 
-        dave = "letmein"; 
+      basicAuth = {
+        dave = "letmein";
         pam = "letmein";
       };
       enableACME = true;
