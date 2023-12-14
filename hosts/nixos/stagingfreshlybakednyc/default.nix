@@ -42,8 +42,6 @@ let
 in {
   imports = [
     "${modulesPath}/virtualisation/amazon-image.nix"
-    # ./modules/inadyn.nix
-    # ./modules/wordpressWithPluginState.nix
   ];
 
   age.secrets = with lib; recursiveUpdate (mapAttrs (n: v: {file = v.cipher;}) secrets) {
