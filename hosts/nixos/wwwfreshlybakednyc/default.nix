@@ -51,8 +51,8 @@ in {
     bashInteractive
   ];
   environment.shellAliases = {
-      l = "${pkgs.exa}/bin/exa -la --color=always";
-      ls = "${pkgs.exa}/bin/exa -a --color=always";
+      l = "${pkgs.eza}/bin/eza -la --color=always";
+      ls = "${pkgs.eza}/bin/eza -a --color=always";
 
       less = "less -R";
       LESS = "less -R --no-lessopen";
@@ -64,7 +64,7 @@ in {
     bashInteractive
     bat
     compsize # compression stats for btrfs
-    exa
+    eza
     fx
     gitMinimal
     #hexyl
@@ -132,6 +132,8 @@ in {
       pain-control
       resurrect
       sensible
+
+      tmux-thumbs
     ];
     terminal = "screen-256color";
   };
@@ -233,22 +235,25 @@ in {
           wp-statistics
         ;
       } // {
+        # TODO(Dave): Consider auto-populating this list starting with the above manually
+        # specified and installed plugins by default.
+
         inherit (wpp.plugins)
           ##########
           # Manually added items...
 
-          # Copmliance
-          age-gate  # TODO(Dave): Push this upstream.
+          # Compliance
+          age-gate  # TODO(Dave): Push this upstream.  # TODO(Dave): What do you mean "upstream" here?
 
           # Site Backups
           all-in-one-wp-migration
           backup-backup
           duplicator
-          # updraftplus
+          updraftplus
         ;
       };
 
-      themes = { inherit (wpp.themes) twentytwentytwo; };
+      themes = { inherit (wpp.themes) twentytwentytwo twentytwentythree; };
     };
 
     webserver = "nginx";
