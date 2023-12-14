@@ -24,7 +24,7 @@ let
       'mailto://dave.nicponski:qlnllemibmyjccyv@gmail.com?from=Dave%20Alerts<dave.nicponski@gmail.com>&to=dave.nicponski@gmail.com'
   '';
 
-  makeSiteWriteable = let 
+  makeSiteWriteable = let
     site = "${freshlyBakedDomain}";
     loc = config.services.nginx.virtualHosts."${site}".root;
   in pkgs.writeShellScriptBin "make-wordpress-site-writeable" ''
@@ -37,7 +37,6 @@ let
 in {
   imports = [
     "${modulesPath}/virtualisation/amazon-image.nix"
-    # ./modules/wordpressWithPluginState.nix
   ];
 
   age.secrets = with lib; recursiveUpdate (mapAttrs (n: v: {file = v.cipher;}) secrets) {
@@ -77,7 +76,6 @@ in {
     viddy # better `watch`
     #vimCustom
     vim
-    #watch
   ] ++ [
     # Dave's additions
     makeSiteWriteable
@@ -109,10 +107,10 @@ in {
   hardware.enableRedistributableFirmware = false;
 
   networking.firewall = {
-    allowedTCPPorts = [ 80 443
-      53  # iodine
+    allowedTCPPorts = [
+      80 443  # nginx
     ];
-    allowedUDPPorts = [ 53 ];  # iodine
+    allowedUDPPorts = [ ];
   };
   networking.hostName = hostname;
 
@@ -275,7 +273,7 @@ in {
     ''${notifyMe}/bin/notify "FYI: System (${hostname}) is apparently starting up"'';
   systemd.services.notify-system-power-cycle.serviceConfig.ExecStop =
     ''${notifyMe}/bin/notify "FYI: System (${hostname}) is apparently shutting down"'';
-  
+
   swapDevices = [
     { device = "/dev/disk/by-uuid/716907b0-c867-4a0b-b2f6-ff3a9e26a6e1"; }  # 800MB
     { device = "/dev/disk/by-uuid/7a24fb96-5f0d-410f-b0d3-a38657824dbb"; }  # 1GB
@@ -287,7 +285,7 @@ in {
     "d '/var/lib/wordpress/overlay/upper' 0750 wordpress nginx - -"
     "d '/var/lib/wordpress/overlay/workdir' 0750 wordpress nginx - -"
   ];
-  
+
   # Add `dave` as a user.
   users = {
     mutableUsers = false;
