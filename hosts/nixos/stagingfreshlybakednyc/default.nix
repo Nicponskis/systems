@@ -437,16 +437,16 @@ in {
     ''${notifyMe}/bin/notify "FYI: System (${hostname}) is apparently shutting down"'';
 
   # TODO(Dave): These two should probably be conditioned on the service being enabled :thinking_face:
-  systemd.services.restart-changedetection = {
-    description = "Restart changedetection-io";
-    script = "systemctl restart podman-changedetection-io.service";
+  systemd.services.restart-changedetection-containers = {
+    description = "Restart changedetection-io-playwright";
+    script = "systemctl restart 'podman-changedetection-io*.service'";
     serviceConfig.Type = "oneshot";
   };
-  systemd.timers.restart-changedetection-timer = {
-    description = "Periodically restart changedetection-io";
+  systemd.timers.restart-changedetection-containers-timer = {
+    description = "Periodically restart changedetection-io-playwright";
     wantedBy = [ "timers.target" ];
     timerConfig.OnCalendar = "hourly";
-    timerConfig.Unit = "restart-changedetection.service";
+    timerConfig.Unit = "restart-changedetection-containers.service";
   };
 
   swapDevices = [
