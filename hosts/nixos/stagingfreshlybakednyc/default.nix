@@ -137,6 +137,10 @@ in {
     # _actually_ using a containerized process for this (by disabling the systemd unit for
     # the nixos service).
     (final: prev: { changedetection-io = pkgs.eza.man; })  # a TINY package, ~7KB
+
+    # # qt5webkit is marked as insecure in 23.11, and we cannot use `nixpkgs.config` to
+    # # individually enable just this package.
+    # (final: prev: { qt5.qtwebkit.meta.insecure = false; })
   ];
 
   programs.mosh.enable = true;
@@ -269,6 +273,9 @@ in {
     #   serverAliases = [ "www.${freshlyBakedDomain}" ];
     # };
 
+    virtualHosts."crm.staging.${freshlyBakedDomain}" = defaults // {
+      serverAliases = [ "staging.crm.${freshlyBakedDomain}" ];
+    };
 
     virtualHosts."sitechanges.dave.nicponski.dev" = defaults // {
       basicAuth = { dave = "letmein"; };
@@ -287,6 +294,17 @@ in {
     SystemMaxUse=150M
     SystemMaxFileSize=15M
   '';
+
+  services.odoo = {
+    enable = true;
+    domain = "crm.staging.${freshlyBakedDomain}";
+    settings.options = {
+      limit_memory_soft = 536870912;  # 512MB
+      limit_memory_hard = 1073741824;  # 1GB
+      max_cron_threads = 1;
+      #workers = 2;
+    };
+  };
 
   services.wordpressWithPluginState = let
     ai1Name = "ai1wm-backups";
