@@ -300,6 +300,12 @@ in {
         sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
       };
 
+      elementor = {
+        version = "3.18.2";
+        # rev = "2924143";
+        sha256 = "sha256-mwuslBUAmm9q0F/CBmCFhPErVV1lku0eA9Ov80h4KKo=";
+      };
+
       #########################
       # Site backups.
       all-in-one-wp-migration = rec {
@@ -378,12 +384,16 @@ in {
           wp-statistics
         ;
       } // {
+        # TODO(Dave): Consider auto-populating this list starting with the above manually
+        # specified and installed plugins by default.
+
         inherit (wpp.plugins)
           ##########
           # Manually added items...
+          elementor
 
           # Compliance
-          age-gate  # TODO(Dave): Push this upstream.
+          age-gate  # TODO(Dave): Push this upstream.  # TODO(Dave): What do you mean "upstream" here?
 
           # Site Backups
           all-in-one-wp-migration
