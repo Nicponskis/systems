@@ -341,7 +341,70 @@ in {
         )
       )) extra);
 
-    mkSitesFrom = lib.mapAttrs (site: args: {
+    # mkSitesFrom = lib.mapAttrs (site: args: {
+    #   #####
+    #   # Debugging stuff here...
+    #   extraConfig = ''
+    #     # @ini_set( 'display_errors', 1 );
+    #   '';
+    #   settings = {
+    #     WP_DEBUG = true;
+    #     WP_DEBUG_LOG = "/tmp/wp-errors.log";
+    #     WP_DEBUG_DISPLAY = false;
+    #   };
+    #   #####
+
+    #   database = {
+    #     createLocally = true;
+    #     name = args.dbName;  # name = "wp_freshlybaked";
+    #     tablePrefix = args.dbTablePrefix;  # tablePrefix = "wp_fb_";
+    #   };
+
+    #   plugins = {
+    #     inherit (wpp.plugins)
+    #       antispam-bee
+    #       async-javascript
+    #       # code-syntax-block
+    #       disable-xml-rpc
+    #       lightbox-photoswipe
+    #       merge-minify-refresh  # Possibly disable if it causes problems
+    #       opengraph  # For better embedded links in social media sites
+    #       simple-login-captcha
+    #       wp-fastest-cache  # Might want to modify .htaccess, perhaps needs manual help?
+    #       wp-statistics
+    #       wordpress-seo
+    #     ;
+    #   } // {
+    #     # TODO(Dave): Consider auto-populating this list starting with the above manually
+    #     # specified and installed plugins by default.
+
+    #     inherit (wpp.plugins)
+    #       ##########
+    #       # Manually added items...
+    #       elementor
+
+    #       # Compliance
+    #       age-gate  # TODO(Dave): Push this upstream.  # TODO(Dave): What do you mean "upstream" here?
+
+    #       # Site Backups
+    #       all-in-one-wp-migration
+    #       backup-backup
+    #       duplicator
+    #       updraftplus
+    #     ;
+    #   };
+
+    #   themes = {
+    #     inherit (wpp.themes) twentytwentytwo twentytwentythree;
+    #   };
+    # });
+  in rec {
+    stateContentDirMapping.all-in-one-wb-migration = ai1Name; # "ai1wm-backups";
+    stateContentDirMapping.all-in-one-wb-migration-storage = "${ai1Name}-storage";
+    stateContentDirMapping.backup-migration = "backup-migration";
+    stateContentDirMapping.duplicator = "backups-dup-lite";
+
+    sites."staging.${freshlyBakedDomain}" = {
       #####
       # Debugging stuff here...
       extraConfig = ''
@@ -356,8 +419,8 @@ in {
 
       database = {
         createLocally = true;
-        name = args.dbName;  # name = "wp_freshlybaked";
-        tablePrefix = args.dbTablePrefix;  # tablePrefix = "wp_fb_";
+        name = "wp_staging_freshlybaked";
+        tablePrefix = "wp_staging_fb_";
       };
 
       plugins = {
@@ -394,27 +457,22 @@ in {
         ;
       };
 
-      themes = {
-        inherit (wpp.themes) twentytwentytwo twentytwentythree;
-      };
-    });
-  in rec {
-    stateContentDirMapping.all-in-one-wb-migration = ai1Name; # "ai1wm-backups";
-    stateContentDirMapping.all-in-one-wb-migration-storage = "${ai1Name}-storage";
-    stateContentDirMapping.backup-migration = "backup-migration";
-    stateContentDirMapping.duplicator = "backups-dup-lite";
+      themes = { inherit (wpp.themes) twentytwentytwo twentytwentythree; };
 
-    sites = mkSitesFrom rec {
-      # "${freshlyBakedDomain}" = {
-      #   dbName = "wp_freshlybaked";
-      #   dbTablePrefix = "wp_fb_";
-      # };
-
-      "staging.${freshlyBakedDomain}" = {
-        dbName = "wp_staging_freshlybaked";
-        dbTablePrefix = "wp_staging_fb_";
-      };
     };
+
+
+    # sites = mkSitesFrom rec {
+    #   # # "${freshlyBakedDomain}" = {
+    #   # #   dbName = "wp_freshlybaked";
+    #   # #   dbTablePrefix = "wp_fb_";
+    #   # # };
+
+    #   # "staging.${freshlyBakedDomain}" = {
+    #   #   dbName = "wp_staging_freshlybaked";
+    #   #   dbTablePrefix = "wp_staging_fb_";
+    #   # };
+    # };
 
     webserver = "nginx";
   };
