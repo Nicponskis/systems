@@ -296,13 +296,11 @@ in {
     extra.plugins = lib.mapAttrs (k: v: v // { rev = v.rev or defaultRevision; }) {
       age-gate = {
         version = "3.2.0";
-        # rev = "2924143";
         sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
       };
 
       elementor = {
         version = "3.18.2";
-        # rev = "2924143";
         sha256 = "sha256-mwuslBUAmm9q0F/CBmCFhPErVV1lku0eA9Ov80h4KKo=";
       };
 
@@ -310,26 +308,22 @@ in {
       # Site backups.
       all-in-one-wp-migration = rec {
         version = "7.79";
-        # rev = "2924143";
         sha256 = "sha256-gshOwU37iC3gYz53haNu4pVSSz3cfRATq1ykcwn1xTY=";
         postInstall = "ln -s ../../${ai1Name}-storage $out/storage";
       };
 
       backup-backup = {
         version = "1.2.9";
-        # rev = "2924143";  # Is this used at all??
         sha256 = "sha256-tKco8umdPIzdurQdCeOeNMLfMpb7Jgk6YohQHq+sPgM=";
       };
 
       duplicator = {
         version = "1.5.7.1";
-        # rev = "2924143";
         sha256 = "sha256-79LHNfh5+4xthtk9732Al38780zvRpSSvZJyUHSECM4=";
       };
 
       updraftplus = {
         version = "1.23.9";
-        # rev = "2924143";  # Is this used at all??
         sha256 = "sha256-zz2YGHvYnPUudhMA9SnKNQ4T8vR7XYx2GvpDpXg9o9c=";
       };
       #########################
@@ -341,10 +335,7 @@ in {
             (pkgs.wordpressPackages.mkOfficialWordpressDerivation {
               inherit pname;
               type = lib.removeSuffix "s" typePlural;
-              data = data // {
-                #inherit (data) rev version sha256;
-                path = "${pname}/tags/${data.version}";
-              };
+              data = data // { path = "${pname}/tags/${data.version}"; };
             }).overrideAttrs (self: super: (builtins.removeAttrs data ["type" "pname" "version" "passthru"]))
           ) v
         )
