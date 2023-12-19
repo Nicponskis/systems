@@ -302,6 +302,13 @@ in {
       elementor = {
         version = "3.18.2";
         sha256 = "sha256-mwuslBUAmm9q0F/CBmCFhPErVV1lku0eA9Ov80h4KKo=";
+        patches = [
+          (pkgs.fetchurl {
+            name = "always-pro";
+            url = "https://github.com/virusdave/elementor/commit/e8e699a1e00411fce2e8bf21d18f70e472d25b0a.patch";
+            hash = "sha256-woMJRMLDDNxTu0HT+tHHPxLEjgzab1zO0Jk/9ZNl668=";
+          })
+        ];
       };
 
       #########################
