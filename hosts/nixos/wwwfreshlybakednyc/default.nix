@@ -171,6 +171,18 @@ in {
         sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
       };
 
+      elementor = {
+        version = "3.18.2";
+        sha256 = "sha256-mwuslBUAmm9q0F/CBmCFhPErVV1lku0eA9Ov80h4KKo=";
+        patches = [
+          (pkgs.fetchurl {
+            name = "always-pro";
+            url = "https://github.com/virusdave/elementor/commit/e8e699a1e00411fce2e8bf21d18f70e472d25b0a.patch";
+            hash = "sha256-woMJRMLDDNxTu0HT+tHHPxLEjgzab1zO0Jk/9ZNl668=";
+          })
+        ];
+      };
+
       #########################
       # Site backups.
       all-in-one-wp-migration = rec {
@@ -241,6 +253,7 @@ in {
         inherit (wpp.plugins)
           ##########
           # Manually added items...
+          elementor
 
           # Compliance
           age-gate  # TODO(Dave): Push this upstream.  # TODO(Dave): What do you mean "upstream" here?
