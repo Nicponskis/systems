@@ -107,10 +107,18 @@
           overlays = [ ];
         };
         nixos-with-overlays = {
-          input = nixos;
           # TODO(Dave): Do `imports` here actually matter??
           imports = [(digga.lib.importOverlays ./overlays)];
-          overlays = [
+
+          # NB: Placed inside a `config` attribute since the config values
+          # we're setting here do include a top-level option named `config`,
+          # so we cannot use the shorthand syntactic sugar for module configs
+          config.config.permittedInsecurePackages = [
+            "qtwebkit-5.212.0-alpha4"
+          ];
+          config.input = nixos;
+
+          config.overlays = [
             # Get Rasp PI to retain clock value across reboots
             (final: prev: {
               inherit (fake-hwclock.packages."${prev.system}") fake-hwclock;
