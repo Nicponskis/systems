@@ -8,11 +8,12 @@ let
 
   changedetection-io-port = 5221;
 
-  maybeFileIfNonempty = filename:
-    lib.optional (
-      (builtins.pathExists filename) &&
-      (builtins.stringLength (builtins.readFile filename) != 0)
-      ) filename;
+  notifyMe = pkgs.writeShellScriptBin "notify" ''
+    ${pkgs.apprise}/bin/apprise -v -t "Heads up from $(${pkgs.hostname}/bin/hostname)..." -b \
+      "$*" \
+      'json://ntfy.sh/?+X-Priority=high&:topic=vd420__notify_01' \
+      'mailto://dave.nicponski:qlnllemibmyjccyv@gmail.com?from=Dave%20Alerts<dave.nicponski@gmail.com>&to=dave.nicponski@gmail.com'
+  '';
 
   secrets = with lib; (flip genAttrs) (n: {
     plain = config.age.secrets.${n}.path;
@@ -21,6 +22,7 @@ let
     "awscli-ip_builder-pw"
     "awscli-s3fs-pw"
     "ddclient-pw"
+    "inadyn-pw"
 
     "test-secret"
   ];
@@ -28,7 +30,6 @@ let
   vims = (import ./nix/vims.nix) { inherit pkgs lib; };
   nix-portables = (import ./nix/nix-portable.nix) { inherit pkgs lib; };
 
-  portForwarded = port: (10000 + port);
 in {
   imports = [
     "${modulesPath}/virtualisation/amazon-image.nix"
@@ -39,32 +40,55 @@ in {
     # Per-secret overrides go here
     awscli-ip_builder-pw.owner = "awscli";
     awscli-s3fs-pw.owner = "awscli";
+    inadyn-pw.owner = "inadyn";
   };
   #age.secrets = {
   #  "ddclient-pw".file = ./secrets/ddclient-pw.age;
   #};
 
-  boot.tmpOnTmpfs = true;
+  boot.tmp.useTmpfs = true;
 
   ec2.hvm = true;
   ec2.efi = true;
 
+  environment.shells = with pkgs; [
+    bashInteractive
+  ];
+  environment.shellAliases = {
+      l = "${pkgs.eza}/bin/eza -la --color=always";
+      ls = "${pkgs.eza}/bin/eza -a --color=always";
+
+      less = "less -R";
+      LESS = "less -R --no-lessopen";
+
+      watch = "viddy";
+  };
   environment.systemPackages = with pkgs; [
     # Essentials
     agenixCLI
     awscli
+    bashInteractive
+    bat
+    eza
     gitMinimal  # TODO(Dave): Eliminate python here also
+    htop
     mosh
+    lsof
+    ncdu
     # nix-portables.bootstrap
     nix-portable
     s3backer
+    viddy # better `watch`
   ] ++ [
     # Really want
     #compsize  # btrfs compression stats
     file
-    htop
-    #nix-tree # Help with space analysis
+    nix-tree # Help with space analysis
+    nvd  # Compare sizes & versions of two system closures
     vims.minimalNormal
+  ] ++ [
+    # Dave's additions
+    notifyMe
   ] ++ [
     # Nice to have...
     #gdb  # TODO(Dave): Reenable sans python
@@ -148,7 +172,6 @@ in {
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [
     53  # DNS
-    (portForwarded changedetection-io-port)
   ];
   networking.firewall.allowedUDPPortRanges = [
     { from = 53; to = 53; } # DNS
@@ -163,10 +186,11 @@ in {
     randomizedDelaySec = "3600sec";
   };
 
-  # Shrink this system closure!!  It appears that all inputs
-  # to the flake will be included by default.
-  # TODO(Dave): Maybe include just the nixpkgs one?
-  nix.registry = lib.mkForce { };
+  nix.generateRegistryFromInputs = false;
+  # # Shrink this system closure!!  It appears that all inputs
+  # # to the flake will be included by default.
+  # # TODO(Dave): Maybe include just the nixpkgs one?
+  # nix.registry = lib.mkForce { };
 
   nix.settings.experimental-features = ["nix-command" "flakes"];
   nix.settings.trusted-users = ["@wheel" "pibuilder"];
@@ -199,16 +223,24 @@ in {
     #   #gitBase = prev.git;
     #   git = final.gitMinimal;
     # })
-
-    # Patch changedetection-io to not phone home.
-    (final: prev: {
-      changedetection-io = prev.changedetection-io.overrideAttrs (ffinal: pprev: {
-        patches = (pprev.patches or []) ++ [
-          ./patches/0001-WIP-Elide-the-phone-home-stuff.patch
-        ];
-      });
-    })
   ];
+
+  programs.mosh.enable = true;
+
+  programs.tmux = {
+    enable = true;
+    plugins = with pkgs.tmuxPlugins; [
+      better-mouse-mode
+      continuum
+      fuzzback  # Maybe, if deps aren't too heavyweight
+      pain-control
+      resurrect
+      sensible
+
+      tmux-thumbs
+    ];
+    terminal = "screen-256color";
+  };
 
   security.acme = {
     acceptTerms = true;
@@ -219,54 +251,6 @@ in {
       group = config.users.users.nginx.group;
     };
   };
-
-  security.sudo = {
-    extraRules = [
-      {
-        users = ["${config.users.users."pibuilder".name}"];
-        commands = let
-          full = re: "^${re}$";
-          sw = bin: "/run/current-system/sw/bin/${bin}";
-          profileRE = "/nix/var/nix/profiles/system(-profiles/[^/]+)?";
-          systemRE = "/nix/store/[a-zA-Z0-9]{32}-nixos-system-${config.system.name}-[^/]+";
-          switchRE = "${systemRE}/bin/switch-to-configuration";
-          actionRE = "switch|boot|test|dry-activate";
-          nopass = command: {
-            inherit command;
-            options = [ "NOPASSWD" "LOG_INPUT" "LOG_OUTPUT" ];
-          };
-          in [
-            (nopass "${sw "nix-env"} ${full "-p ${profileRE} --set ${systemRE}"}")
-            (nopass "${sw "nix-env"} ${full "--rollback -p ${profileRE}"}")
-            (nopass "${sw "nix-env"} ${full "-p ${profileRE} --list-generations"}")
-            (nopass "${full switchRE} ${full actionRE}")
-
-            (nopass "${sw "htop"}")  # may as well :)
-          ];
-      }
-    ];
-  };
-
-  # Watch webpages for changes
-  services.changedetection-io = {
-    # enable = true;
-
-    baseURL = "https://sitechanges.dave.nicponski.dev:${toString (portForwarded changedetection-io-port)}/";
-    behindProxy = false;
-    # chromePort = 4444;  # defaults to 4444
-    datastorePath = "/mnt/s3fs/changedetection-io/data";
-    environmentFile = pkgs.writeText "chagedetection-io_environment" ''
-      HIDE_REFERER=true
-    '';
-    # listenAddress = "0.0.0.0";  # Expose externally as well.  Defaults to `localhost`.
-    port = changedetection-io-port;  # Defaults to port 5000
-    webDriverSupport = true;  # Enable to use headless Chromium for rendering
-  };
-  # Tacky fix for using the docker image on ARM
-  virtualisation.oci-containers.containers =
-    lib.mkIf config.services.changedetection-io.webDriverSupport {
-      changedetection-io-webdriver.image = lib.mkForce "seleniarm/standalone-chromium";
-    };
 
   services.ddclient = {
     enable = true;
@@ -279,87 +263,32 @@ in {
     username = "tsDqVBmzF2UmhpUb";
   };
 
-  # TODO(Dave): This looks like vestigial leftovers from the rPI config.  Remove it?
-  # services.dwarffs = {
-  #   enable = true;
-  #   gcDelay = "4h";
-  # };
-
-  services.iodine = {
-    server = {
-      domain = "dns.proxy.dave.nicponski.dev";
-      ip = "10.0.0.1";
-      passwordFile = ./iodine-pw;  # TODO(Dave): FIXME
-    };
-  };
-
-  services.nginx = {
+  services.networking.inadyn = {
     enable = true;
-    recommendedGzipSettings = true;
-    recommendedOptimisation = true;
-    recommendedProxySettings = true;
-    recommendedTlsSettings = true;
 
-    virtualHosts = {
-      # Needed because `.dev` TLD auto-pins certs via HSTS.  Grrrr.
-      "sitechanges.dave.nicponski.dev" = {
-        enableACME = true;
-        forceSSL = true;
-        listen = [{
-          addr = "0.0.0.0";
-          port = portForwarded changedetection-io-port;
-          ssl = true;
-        }];
-        locations."/" = {
-          proxyPass = "http://localhost:${toString changedetection-io-port}";
-          proxyWebsockets = true;
-        };
-      };
-    };
+    configFileContents = ''
+      period = 60
+      user-agent = Mozilla/5.0
+     '';
+     providers."domains.google.com" = {
+      hostname = "west.builder.arm.aws.nicponski.dev";
+      passwordFile = secrets.inadyn-pw.plain;
+      username = "tsDqVBmzF2UmhpUb";
+     };
   };
 
-  services.openssh = {
-    extraConfig = ''
-      AcceptEnv LANG LC_* NIX_STORE_DIR NIX_STATE_DIR
-    '';
-    passwordAuthentication = false;
-  };
+  services.openssh.settings.PasswordAuthentication = false;
+
+  swapDevices = [
+    { device = "/dev/disk/by-uuid/fcd5007d-b1e8-42d4-b5b7-66228278a648"; }  # 4GB
+  ];
 
   system.stateVersion = "22.11"; # don't change unless nixos release notes say to do so!!
 
-  systemd.services = {
-    # # TODO(Dave): Move this to a module!  (and get it to work again on shutdown rather than reboot!!)
-    # "release-public-ip" = {
-    #   description = "Release any public IP address";
-    #   after = ["network-online.target" "nix-daemon.service"];
-    #   #environment.NIX_PATH = "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos";
-    #   #path = with pkgs; [ awscli bashInteractive curl ];
-    #   requires = ["network-online.target"];
-    #   restartIfChanged = false;
-    #   startLimitBurst = 3;
-    #   startLimitIntervalSec = 60;
-    #   #wantedBy = ["multi-user.target"];
-    #   wantedBy = ["halt.target" "poweroff.target" "shutdown.target"];
-    #   wants = [ "nix-daemon.service"];
-
-    #   serviceConfig = {
-    #     #ExecStart = "/run/current-system/sw/bin/echo Nothing to do at startup";
-    #     ExecStart = "${aws_public_ip} drop";
-    #     #ExecStop = "${aws_public_ip} drop";
-    #     Group = "awscli";
-    #     RemainAfterExit = true;
-    #     #StandardError = "journal+console";
-    #     StandardError = "journal";
-    #     StandardOutput = "journal";
-    #     Type = "oneshot";
-    #     User = "awscli";
-    #   };
-    # };
-  };
+  systemd.services = { };
 
   systemd.tmpfiles.rules = [
     "d /var/cache/s3backer 0700 root root"
-    "d /mnt/s3fs/changedetection-io/data 0700 changedetection-io changedetection-io"
   ];
 
   users = {
@@ -370,29 +299,36 @@ in {
       group = "awscli";
       isSystemUser = true;
     };
+
     users."console" = {
       extraGroups = ["wheel"];
       isNormalUser = true;
       hashedPassword = "$y$j9T$j6MLISztfwKPVd8HYbEuy.$jM0dh0rfP4q0tHcf5u2BBNxYW31JHL1rvn47f5HpLM1";
     };
 
-    users."pibuilder" = {
+    users."dave" = {
+      createHome = true;
+      extraGroups = [ "wheel" "audio" "video" "tty" "adm" "messagebus" "input" "render" "podman" ]; # Enable ‘sudo’ for the user.
+      hashedPassword = "$y$j9T$4R36MYOFnwVVLvb6hHml1.$qacBsg3r9.hU/uy0WNOjxgL7KfZu7B016gSRvtzUNL9";
+      home = "/home/dave";
+      isNormalUser = true;
+      openssh.authorizedKeys.keys = [
+        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCi+GbiMk0UqGYfG+7jmTGaKRtIVTFBwVG0p6kg3l4rsG2S7LCBG9MAgMQQKCfBay1SdXVZvr8wrc7TMj2dk0ZrnQklBd7Cn6hXE3rOiIa+1FFAtXfI4r6gMhzIa91uF63okW09wPYCUxUYmhNSGwC1rTytU5SE1jf5o/Asp/ZfHvmxhm5EUxw5qacS/Ilf4OhEWyQaQG6xeHnO4NCGThIpdTxC2Q9LpQAPlz6lZedEWTTLcXRTcG+olhxfudQ/JMdzQhqluVRCOgolIS32rvKi9st7H3D6q2sZH8MNnbl22FQNHg8f4fl34L1X/n/Zf6573eL0V5uKEtdachwrN+X5FUgwwzn7ivHjAxOHVHuWuADk+HVCG95zN1eyPLbCR8FwF/LtfjfQiF6Erwd3mNdjMK9J1upAfZkix7Ap8UDi2qmK5fzWNXcvFV7bFSo8kRd7ztMRUzHU7iTynRBUGhQel0+S27oMkOrf8yucvEWwf6dq064IleQEjronyweUmLgcSIWrxZJcLohnruleJzSz1MngZ8lsccMNGQys1D1ycayYirMFqBneNnRPtpaqesy9aADvxyzCvp69DogeJEfe++FGGVaKijxRc//EwCqqSyaie+eH1+eVMva+QN3G3yjNgIiNo3ztc60hqQq0sG/K447zHuyr5xFc54fYFv2ZwQ== dave.nicponski@gmail.com"
+        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6P8roQA7hkbzFM8RqDY8DDkwfg+GbVzilBWjF6L8urodwkXtGPGIf/uyP18bC+ceYRyYbYRAeynVpueNPkcWQUf0GzvBXVkO6bHc7/M6Dj8VYe3v/lgeb6fyVRiI7khsS1ra37asPCOLxLqzYUh8+ml5tzmED3dwpgPcULw0/jnRaKlzJ/TNaDAI1u69FBbDswblNhFqSoQq1C6nUHb2hf9Zegb3FHwy4pE3LVvxqZiVj1z0zlrNVWHYM/LN4sihp9n81llHGDLa0ReZiYkgPBgvTn90XKbZ/gI3RuxYL52cxUohP2r+P4G2nIvaJK4SK9quEIXYhro7dJRz6h3SV dave.nicponski@gmail.com chromebook"
+      ];
+    };
+
+    users."builder" = {
       isNormalUser = true;
       openssh.authorizedKeys.keys = [
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCqsa5ccTCbVGKxZdupKYkkNKch6MPaahPSfVYJa0fa9Eoj44T0Cz5pcnOorjHekKOTGJDU817vYZ2b9a7TsXuEGmJNOMzubn7jpydOoUkq826Hpa8RJUCkygxL7j2EZsm0h8FXKgB7Xbz39x9POG7Zrs5M3kCHVSr8MMSXEvjNIV81e1AR4lDOM3mlb0qpMB0AXkt0vEO+aEHBc4BkS4ff5i63AdN5TcEr/sQW1WpPdnnkmmnToHRtDI1AA/cDP6pOzw8ONcK1/J9W1vkWz7zW/kSFkeu91zoSBImRNelwZM6gJ580XzgWdeqDK5Q6u1x4lrlwtgWlDqOpZ2syphhwTuJIHGgr3YBYHr7nzCJ43RS0qG8M8wsS3n0BrRy+fTCatVYgJGKxnfNuzynTp3NYJjjVgZonTKDDzdlFakf6GEfekwJLX2wkTlSonBuWyzjVxn249HUBwKFz8hFyymbUWNWPu8Fv7hRtJrKWvrHOnIR0SVZoArO/mug9LeYZSrM= dave@lidjamoypi"
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC3byObhoiui0p3ot+Dh/d5W1olb6g0oLYoQlqts1fjgxTsdJSqmjnlpkAC0SohZjERXRSIndwHeHkoFI875P9t3gJSbkRXTJ78WsiGmqYVYcJ87/aS6RIDRx8/2aHIorJMxYCv0WtytbDBXhPFosITT4jUhSRObFfAo5DfWnfnaiVO+AERP67XHT+mDQm/rz2lNIeqambkXQRcs0itFeuvoPTCuV6pGtzEoZRxFzPKubZHMVqoH2GJyXL5yGjO0Z2drKFYg6ZnQ3mTEecd+MLIaRpdEb2uAczdl9pR+d4BltCT9jS+N3OLrB3TM0tdxAdqk+vK06/aYiczZzKyMqlAAa04Vj9sdD5lUYm9az69z9FYnCZ84L4jPKUdpteLV7lwzbC/RTDW7a8aXeitrL6fwGbLTYeaHgK79WN6T4dlxKi7cnjRviLmpBSask/CxoDGvnIinuZIVWbSndl4MHQbfM63btNo32TIRdYB52n/tgss3p5euH8z3NQ51k/GZjE= root@lidjamoypi"
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCi+GbiMk0UqGYfG+7jmTGaKRtIVTFBwVG0p6kg3l4rsG2S7LCBG9MAgMQQKCfBay1SdXVZvr8wrc7TMj2dk0ZrnQklBd7Cn6hXE3rOiIa+1FFAtXfI4r6gMhzIa91uF63okW09wPYCUxUYmhNSGwC1rTytU5SE1jf5o/Asp/ZfHvmxhm5EUxw5qacS/Ilf4OhEWyQaQG6xeHnO4NCGThIpdTxC2Q9LpQAPlz6lZedEWTTLcXRTcG+olhxfudQ/JMdzQhqluVRCOgolIS32rvKi9st7H3D6q2sZH8MNnbl22FQNHg8f4fl34L1X/n/Zf6573eL0V5uKEtdachwrN+X5FUgwwzn7ivHjAxOHVHuWuADk+HVCG95zN1eyPLbCR8FwF/LtfjfQiF6Erwd3mNdjMK9J1upAfZkix7Ap8UDi2qmK5fzWNXcvFV7bFSo8kRd7ztMRUzHU7iTynRBUGhQel0+S27oMkOrf8yucvEWwf6dq064IleQEjronyweUmLgcSIWrxZJcLohnruleJzSz1MngZ8lsccMNGQys1D1ycayYirMFqBneNnRPtpaqesy9aADvxyzCvp69DogeJEfe++FGGVaKijxRc//EwCqqSyaie+eH1+eVMva+QN3G3yjNgIiNo3ztc60hqQq0sG/K447zHuyr5xFc54fYFv2ZwQ== dave.nicponski@gmail.com davembp2"
-
-        # Allow self-ssh from inside the bwrap chroot.
-        # TODO(Dave): Can't we refer to the public key without having to embed it here?
-        "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGjtYCp9zMMsGp9d4bYtywB15Li8Pag9kFTU7XS/v3U/PZNprD9+RNp6X9k2RRg0GfIzsn15Kw59ka75gAEFi7E= pibuilder@auto.builder.arm.aws"
       ];
     };
 
-    # TODO(Dave): Not sure if this works (do we use root inside the chroot jail even?)
     users."root".openssh.authorizedKeys.keys = [
-      # Allow self-ssh from inside chroot to push binaries into host store
-      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDF14YFQO6wRG3D8J5a0JzqfRsFtL0azbRQimjN+9MpiNUGkv9AMA9ITcztmyJRwzwTZAKSIYOa2B9aFwNvQ/CZyFXsBt/ux18L/uRNF+xeSDOgkxo7Y8ErCdVg024/AphSM5/CEEiOotKoZKV+cYSNsgcuKnr7XY/ESc5Xm47MijxYywG1k1GNudBwxGy5D45wnKq/h1yYxCG/PyFPk2QN2PK5wnsEYhcswJ8Z54C0BcAUMvdnnMZ9v/QVqwJOfZCmhwG0Z3KTKwypmZCAqWapH+r81a7SlGyPupAdw7XK2QhWsiUqUINVyGUtYFA1GUnUiFjwjeUbpjV3xaJMFkFdzCDOtZPnYXgnCkoIwM9ZigS7wHaoSRy94o7UuHksteVKiN8WQ7ehf274NAi68u1BNKoMypjFd5B70o95q4itJ6Rn2vrCb8qC85FFyh4ueFfG4c5QkeKc/erJWQJMb0OSTeBsxV2ZXYviB/sJ0u4AY9+xgfVwCPFjVep7a9Yq94M= root@builder.arm.aws.internal"
+      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCi+GbiMk0UqGYfG+7jmTGaKRtIVTFBwVG0p6kg3l4rsG2S7LCBG9MAgMQQKCfBay1SdXVZvr8wrc7TMj2dk0ZrnQklBd7Cn6hXE3rOiIa+1FFAtXfI4r6gMhzIa91uF63okW09wPYCUxUYmhNSGwC1rTytU5SE1jf5o/Asp/ZfHvmxhm5EUxw5qacS/Ilf4OhEWyQaQG6xeHnO4NCGThIpdTxC2Q9LpQAPlz6lZedEWTTLcXRTcG+olhxfudQ/JMdzQhqluVRCOgolIS32rvKi9st7H3D6q2sZH8MNnbl22FQNHg8f4fl34L1X/n/Zf6573eL0V5uKEtdachwrN+X5FUgwwzn7ivHjAxOHVHuWuADk+HVCG95zN1eyPLbCR8FwF/LtfjfQiF6Erwd3mNdjMK9J1upAfZkix7Ap8UDi2qmK5fzWNXcvFV7bFSo8kRd7ztMRUzHU7iTynRBUGhQel0+S27oMkOrf8yucvEWwf6dq064IleQEjronyweUmLgcSIWrxZJcLohnruleJzSz1MngZ8lsccMNGQys1D1ycayYirMFqBneNnRPtpaqesy9aADvxyzCvp69DogeJEfe++FGGVaKijxRc//EwCqqSyaie+eH1+eVMva+QN3G3yjNgIiNo3ztc60hqQq0sG/K447zHuyr5xFc54fYFv2ZwQ== dave.nicponski@gmail.com davembp2"
     ];
   };
 }
