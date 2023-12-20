@@ -300,7 +300,7 @@ in {
 
       elementor = {
         version = "3.18.2";
-        sha256 = "sha256-mwuslBUAmm9q0F/CBmCFhPErVV1lku0eA9Ov80h4KKo=";
+        sha256 = "sha256-O0f5ngjykALcYUVddZgJx6BBKkx1T47YRUmpM6tc1YA=";
         patches = [
           (pkgs.fetchurl {
             name = "always-pro";
@@ -314,7 +314,7 @@ in {
       # Site backups.
       all-in-one-wp-migration = rec {
         version = "7.79";
-        sha256 = "sha256-gshOwU37iC3gYz53haNu4pVSSz3cfRATq1ykcwn1xTY=";
+        sha256 = "sha256-eyWIupl96qG2oz0tjGMGKKH8++yTvW3V1+mcr9/i/wA=";
         postInstall = "ln -s ../../${ai1Name}-storage $out/storage";
       };
 
@@ -330,12 +330,12 @@ in {
 
       duplicator = {
         version = "1.5.7.1";
-        sha256 = "sha256-79LHNfh5+4xthtk9732Al38780zvRpSSvZJyUHSECM4=";
+        sha256 = "sha256-js1gUbIO3h0c4G7YJPCbGK5uwP6n6WWnioMZUh/homs=";
       };
 
       updraftplus = {
         version = "1.23.9";
-        sha256 = "sha256-zz2YGHvYnPUudhMA9SnKNQ4T8vR7XYx2GvpDpXg9o9c=";
+        sha256 = "sha256-rb+FF/AOH8zQNTUKi13dv2vamlIHgNc0al4qcq+qJkc=";
       };
       #########################
     };
