@@ -357,6 +357,11 @@ in {
     stateContentDirMapping.all-in-one-wb-migration-storage = "${ai1Name}-storage";
     stateContentDirMapping.backup-migration = "backup-migration";
     stateContentDirMapping.duplicator = "backups-dup-lite";
+  test = {
+    wpp = wpp;
+    origWpp = pkgs.wordpressPackages;
+    extra = extra;
+  };
 
     sites."staging.${freshlyBakedDomain}" = {
       #####

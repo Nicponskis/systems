@@ -27,6 +27,10 @@ in {
       type = attrs;
       # TODO(Dave): Don't be lazy here.
     };
+    test = mkOption {
+      default = null;
+      type = attrs;
+    };
   };
 
   config = mkIf (sites != {}) (
@@ -67,7 +71,7 @@ in {
 
       services.wordpress.sites =
         lib.mapAttrs (k: v: (v // {
-          package = (withSymlinksForSite (v.package or pkgs.wordpress) k cfg.stateContentDirMapping);
+          package = (withSymlinksForSite (v.package or pkgs.wordpress) k cfg.stateContentDirMapping) // {passthru.wpp = cfg.test;};
         })) sites;
       services.wordpress.webserver = cfg.webserver;
     }
