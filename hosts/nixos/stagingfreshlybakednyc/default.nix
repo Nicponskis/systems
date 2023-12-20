@@ -290,7 +290,7 @@ in {
 
   services.wordpressWithPluginState = let
     ai1Name = "ai1wm-backups";
-    defaultRevision = "2924143";
+    defaultRevision = "3012590";
 
     extra.plugins = lib.mapAttrs (k: v: v // { rev = v.rev or defaultRevision; }) {
       age-gate = {
