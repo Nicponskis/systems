@@ -292,7 +292,8 @@ in {
     ai1Name = "ai1wm-backups";
     defaultRevision = "3012590";
 
-    extra.plugins = lib.mapAttrs (k: v: v // { rev = v.rev or defaultRevision; }) {
+    extra = (lib.recursiveUpdate {
+    plugins = (lib.mapAttrs (k: v: v // { rev = v.rev or defaultRevision; }) {
       age-gate = {
         version = "3.2.0";
         sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
@@ -338,7 +339,26 @@ in {
         sha256 = "sha256-rb+FF/AOH8zQNTUKi13dv2vamlIHgNc0al4qcq+qJkc=";
       };
       #########################
+    });
+    } hackForThirdpartyPackages);
+
+    hackForThirdpartyPackages = {
+      # Copied from `pkgs/servers/web-apps/wordpress/packages/thirdparty.nix` until this lands or can be patched in:
+      # https://github.com/NixOS/nixpkgs/pull/275751
+      plugins.civicrm = pkgs.fetchzip rec {
+        name = "civicrm";
+        version = "5.56.0";
+        url = "https://storage.googleapis.com/${name}/${name}-stable/${version}/${name}-${version}-wordpress.zip";
+        /*hash*/ sha256 = "sha256-XsNFxVL0LF+OHlsqjjTV41x9ERLwMDq9BnKKP3Px2aI=";
+      };
+      themes.geist = pkgs.fetchzip rec {
+        name = "geist";
+        version = "2.0.3";
+        url = "https://github.com/christophery/geist/archive/refs/tags/${version}.zip";
+        /*hash*/ sha256 = "sha256-c85oRhqu5E5IJlpgqKJRQITur1W7x40obOvHZbPevzU=";
+      };
     };
+
     wpp = pkgs.wordpressPackages.extend (self: super:
       lib.mapAttrs (typePlural: v: (
         super."${typePlural}".extend (_: _:
@@ -386,6 +406,7 @@ in {
         inherit (wpp.plugins)
           antispam-bee
           async-javascript
+          civicrm
           # code-syntax-block
           disable-xml-rpc
           lightbox-photoswipe
