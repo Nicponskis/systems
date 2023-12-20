@@ -323,6 +323,11 @@ in {
         sha256 = "sha256-tKco8umdPIzdurQdCeOeNMLfMpb7Jgk6YohQHq+sPgM=";
       };
 
+      blog2social = {
+        version = "7.3.4";
+        sha256 = "sha256-q50RTKGpH4Cwmk96zFjUzXtNo6htly8pqFEPcbuwQI4=";
+      };
+
       duplicator = {
         version = "1.5.7.1";
         sha256 = "sha256-79LHNfh5+4xthtk9732Al38780zvRpSSvZJyUHSECM4=";
@@ -393,6 +398,7 @@ in {
         inherit (wpp.plugins)
           ##########
           # Manually added items...
+          blog2social
           elementor
 
           # Compliance
