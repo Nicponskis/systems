@@ -303,6 +303,10 @@ in {
       limit_memory_hard = 1073741824;  # 1GB
       max_cron_threads = 1;
       #workers = 2;
+
+      # db_name = "False";
+      db_name = "odoo";
+      # log-level = "debug_sql";
     };
   };
 
