@@ -292,7 +292,7 @@ in {
     ai1Name = "ai1wm-backups";
     defaultRevision = "3012590";
 
-    extra = (lib.recursiveUpdate {
+    extra = /*(lib.recursiveUpdate*/ {
     plugins = (lib.mapAttrs (k: v: v // { rev = v.rev or defaultRevision; }) {
       age-gate = {
         version = "3.2.0";
@@ -340,7 +340,7 @@ in {
       };
       #########################
     });
-    } hackForThirdpartyPackages);
+    } /*hackForThirdpartyPackages)*/;
 
     hackForThirdpartyPackages = {
       # Copied from `pkgs/servers/web-apps/wordpress/packages/thirdparty.nix` until this lands or can be patched in:
@@ -406,7 +406,7 @@ in {
         inherit (wpp.plugins)
           antispam-bee
           async-javascript
-          civicrm
+          # civicrm
           # code-syntax-block
           disable-xml-rpc
           lightbox-photoswipe
