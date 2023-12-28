@@ -183,6 +183,7 @@ in {
     })
     (lib.mkIf config.services.changedetection-io.playwrightSupport {
       changedetection-io.dependsOn = [ "changedetection-io-playwright" ];
+      changedetection-io.environment.DEBUG = "-browserless:chrome-helper*,browserless:server";  # Disable log spam
       changedetection-io.environment.PLAYWRIGHT_DRIVER_URL =
         "ws://localhost:4444/?stealth=1&--disable-web-security=true";
       changedetection-io-playwright.image =
