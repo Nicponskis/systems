@@ -310,6 +310,13 @@ in {
     };
   };
 
+  # services.postgresql.extraPlugins = [ pkgs.postgresql_15.pkgs.pg_stat_statements ];
+  services.postgresql.settings = {
+    # log_connections = true;
+    # log_disconnections = true;
+    # logging_collector = true;
+  };
+
   services.wordpressWithPluginState = let
     ai1Name = "ai1wm-backups";
     defaultRevision = "3012590";
