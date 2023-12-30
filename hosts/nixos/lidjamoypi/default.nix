@@ -94,7 +94,7 @@ in {
       "/bin"
       "/etc"
       "/share"
-      "/share/tmux-plugins"
+      # "/share/tmux-plugins"
     ];
 
     shellAliases = {
@@ -909,18 +909,14 @@ in {
     stateVersion = "19.09"; # Did you read the comment?
   };
 
-  systemd = {
-    services = {
-      # TODO(Dave): This always seems to fail and doesn't actually seem necessary!?!  REMOVE IT IF SO!
-      # Enable bluetooth support, as per the nixos RaspPI Bluetooth section
-      btattach = {
-        before = [ "bluetooth.service" ];
-        after = [ "dev-ttyAMA0.device" ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          ExecStart = "${pkgs.bluez}/bin/btattach -B /dev/ttyAMA0 -P bcm -S 3000000";
-        };
-      };
+  # TODO(Dave): This always seems to fail and doesn't actually seem necessary!?!  REMOVE IT IF SO!
+  # Enable bluetooth support, as per the nixos RaspPI Bluetooth section
+  systemd.services.btattach = {
+    before = [ "bluetooth.service" ];
+    after = [ "dev-ttyAMA0.device" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.bluez}/bin/btattach -B /dev/ttyAMA0 -P bcm -S 3000000";
     };
   };
 
