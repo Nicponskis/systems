@@ -155,15 +155,16 @@ in {
       ripgrep-all
       silver-searcher
       tig
-      tmux
-      tmuxPlugins.continuum
-      tmuxPlugins.copycat
-      tmuxPlugins.logging
-      tmuxPlugins.pain-control
-      tmuxPlugins.prefix-highlight
-      tmuxPlugins.resurrect
-      tmuxPlugins.sensible
-      tmuxPlugins.yank
+      # TODO(Dave): Remove this block
+      # tmux
+      # tmuxPlugins.continuum
+      # tmuxPlugins.copycat
+      # tmuxPlugins.logging
+      # tmuxPlugins.pain-control
+      # tmuxPlugins.prefix-highlight
+      # tmuxPlugins.resurrect
+      # tmuxPlugins.sensible
+      # tmuxPlugins.yank
       tree
       vim
       vimPlugins.lightline-vim
@@ -374,8 +375,24 @@ in {
   # programs.mtr.enable = true;
   # programs.gnupg.agent = { enable = true; enableSSHSupport = true; };
 
-  programs = {
-    gamemode.enable = true;
+  programs.gamemode.enable = true;
+  programs.tmux = {
+    enable = true;
+    plugins = with pkgs.tmuxPlugins; [
+      better-mouse-mode
+      continuum
+      copycat
+      fuzzback  # Maybe, if deps aren't too heavyweight
+      logging
+      pain-control
+      prefix-highlight
+      resurrect
+      sensible
+      yank
+
+      tmux-thumbs
+    ];
+    terminal = "screen-256color";
   };
 
   security.acme = {
