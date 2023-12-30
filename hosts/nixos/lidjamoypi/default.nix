@@ -98,8 +98,8 @@ in {
     ];
 
     shellAliases = {
-      l = "exa -la --color=always";
-      ls = "exa -a --color=always";
+      l = "${pkgs.eza}/bin/eza -lag --color=always --color-scale";
+      ls = "${pkgs.eza}/bin/eza -ag --color=always --color-scale";
 
       less = "less -R";
       LESS = "less -R --no-lessopen";
@@ -124,7 +124,7 @@ in {
       dig
       duf
       elfutils  # Includes eu-stack, eu-readelf, etc.  Added w/ gdb.
-      exa
+      eza
       fd
       file
       fx
