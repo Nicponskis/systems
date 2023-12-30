@@ -566,7 +566,7 @@ in {
     # For browsing samba shares (in xwindows)
   services.gvfs = {
     enable = true;
-    package = lib.mkForce pkgs.gnome3.gvfs;
+    package = lib.mkForce pkgs./*gnome3.*/gvfs;
   };
 
   services.iptables_exporter = {
