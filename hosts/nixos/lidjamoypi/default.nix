@@ -70,16 +70,16 @@ in {
     # `achi` module for some reason, causing the build to fail.
     #initrd.includeDefaultModules = false;
 
-    #kernelPackages = pkgs.linuxPackages_5_4; # Works
     kernelParams = [
       #"cma=64M"  # Older, default value for rasp pi3
       "cma=128M"
     ];
+    #kernelParams = ["cma=128M"];
 
-    #kernelPackages = pkgs.linuxPackages_rpi3;
+    #kernelPackages = pkgs.linuxPackages_5_4; # Works
+    #kernelPackages = pkgs.linuxPackages_rpi3;  # Doesn't work, apparently?
     kernelPackages = pkgs.linuxPackages_5_10; # Works
     #kernelPackages = pkgs.linuxPackages_5_15;
-    #kernelParams = ["cma=128M"];
   };
 
   environment = {
