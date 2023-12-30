@@ -898,8 +898,8 @@ in {
   sound.enable = true;
   hardware.pulseaudio.enable = true;
 
-  # Use 2GB of additional swap memory
-  swapDevices = [ { device = "/swapfile"; size = 2048; } ];
+  # Use 5GB of additional swap memory
+  swapDevices = [ { device = "/swapfile"; size = 1024 * 5 /*MiB*/; randomEncryption.enable = true; } ];
 
   system = {
     # This value determines the NixOS release with which your system is to be
