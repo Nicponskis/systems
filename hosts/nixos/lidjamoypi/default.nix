@@ -128,7 +128,7 @@ in {
       fd
       file
       fx
-      fzf
+      # fzf
       gdb  # Can we get one without python support for better size perhaps?
       git
       # Maybe remove this eventually
@@ -152,7 +152,7 @@ in {
       peco
       pstree
       python3
-      ripgrep-all
+      # ripgrep-all
       silver-searcher
       tig
       # TODO(Dave): Remove this block
@@ -209,7 +209,7 @@ in {
 
   hardware = {
     # Better than `allowNonFree` ?
-    enableRedistributableFirmware = true;
+    enableRedistributableFirmware = false;
 
     opengl.enable = true;
   };
