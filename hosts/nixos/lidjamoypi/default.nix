@@ -23,6 +23,13 @@ let
 
   portForwarded = port: (10000 + port);
 
+  notifyMe = pkgs.writeShellScriptBin "notify" ''
+    ${pkgs.apprise}/bin/apprise -v -t "Heads up from $(${pkgs.hostname}/bin/hostname)..." -b \
+      "$*" \
+      'json://ntfy.sh/?+X-Priority=high&:topic=vd420__notify_01' \
+      'mailto://dave.nicponski:qlnllemibmyjccyv@gmail.com?from=Dave%20Alerts<dave.nicponski@gmail.com>&to=dave.nicponski@gmail.com'
+  '';
+
   myRetroarch = (
       let
         retroArchWith = cores: [ (pkgs.retroarch.override {cores = cores;}) ] ++ cores;
@@ -177,8 +184,9 @@ in {
       watch
       wget
     ] ++
-      myRetroarch
-    ;
+      myRetroarch ++ [
+      notifyMe
+    ];
   };
 
   fileSystems = let
