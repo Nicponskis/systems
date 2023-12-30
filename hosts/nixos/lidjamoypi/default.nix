@@ -11,7 +11,6 @@ let
   grafanaPort = 14080;
   grafanaTlsPort = 14443;
   acmeChallengePrefix = "_acme-challenge";
-  changedetection-io-port = 5221;
   foopiDomain = "foo.${stitchpiDomain}";
   nasAddress = "10.68.0.1";
   nicponskiChallengeDomain = "${acmeChallengePrefix}.${nicponskiFamilyDomain}";
@@ -289,7 +288,6 @@ in {
       53 80 443
       acmePort acmeTlsPort
       grafanaPort grafanaTlsPort
-      # (portForwarded changedetection-io-port)
     ];
     # firewall.allowedUDPPorts = [ ... ];
     firewall.allowedUDPPortRanges = [
@@ -357,15 +355,6 @@ in {
           sha256 = "1rb5b3fzxk5bi6kfqp76q1qszivi0v1kdz1cwj2llp5sd9ns03b5";
         };
         outputHash = "1p7vn2hfwca6w69jhw5zq70w44ji8mdnibm1z959aalax6ndy146";
-      });
-    })
-
-    # Patch changedetection-io to not phone home.
-    (final: prev: {
-      changedetection-io = prev.changedetection-io.overrideAttrs (ffinal: pprev: {
-        patches = (pprev.patches or []) ++ [
-          ./patches/0001-WIP-Elide-the-phone-home-stuff.patch
-        ];
       });
     })
   ];
@@ -499,28 +488,6 @@ in {
     ];
   };
 
-  # Watch webpages for changes
-  services.changedetection-io = {
-    # enable = true;
-
-    baseURL = "https://sitechanges.dave.nicponski.dev:${toString (portForwarded changedetection-io-port)}/";
-    behindProxy = false;
-    # chromePort = 4444;  # defaults to 4444
-    # datastorePath = "/var/lib/changedetection-io";
-    environmentFile = pkgs.writeText "chagedetection-io_environment" ''
-      HIDE_REFERER=true
-    '';
-    # listenAddress = "0.0.0.0";  # Expose externally as well.  Defaults to `localhost`.
-    port = changedetection-io-port;  # Defaults to port 5000
-    webDriverSupport = true;  # Enable to use headless Chromium for rendering
-  };
-  # Tacky fix for using the docker image on ARM
-  virtualisation.oci-containers.containers =
-    lib.mkIf config.services.changedetection-io.webDriverSupport {
-      changedetection-io-webdriver.image = lib.mkForce "seleniarm/standalone-chromium";
-    };
-
-
   services.ddclient = {
     enable = true;
 
@@ -630,21 +597,6 @@ in {
         # TODO(Dave): Remove the original perhaps?
         useACMEHost = nicponskiFamilyDomain; #stitchpiDomain;
       };
-
-      # # Needed because `.dev` TLD auto-pins certs via HSTS.  Grrrr.
-      # "sitechanges.dave.nicponski.dev" = {
-      #   enableACME = true;
-      #   forceSSL = true;
-      #   listen = [{
-      #     addr = "0.0.0.0";
-      #     port = portForwarded changedetection-io-port;
-      #     ssl = true;
-      #   }];
-      #   locations."/" = {
-      #     proxyPass = "http://localhost:${toString changedetection-io-port}";
-      #     proxyWebsockets = true;
-      #   };
-      # };
 
     # Below line and let binding are WIP
     } // (let
