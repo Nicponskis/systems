@@ -928,6 +928,25 @@ in {
     };
   };
 
+  systemd.services.notify-system-power-cycle = {
+    serviceConfig = {
+      Type = "oneshot";
+      TimeoutSec = 60;
+      RemainAfterExit = "yes";
+    };
+
+    description = "Notify Dave when this system is starting up";
+
+    after = [ "network-online.target" ];
+    requires = [ "network-online.target" ];
+    before = [ "multi-user.target" ];
+    wantedBy = [ "multi-user.target" ];
+  };
+  systemd.services.notify-system-power-cycle.serviceConfig.ExecStart =
+    ''${notifyMe}/bin/notify "FYI: System (${config.networking.hostName}) is apparently starting up"'';
+  systemd.services.notify-system-power-cycle.serviceConfig.ExecStop =
+    ''${notifyMe}/bin/notify "FYI: System (${config.networking.hostName}) is apparently shutting down"'';
+
   # Set your time zone.
   time.timeZone = "America/New_York";
 
