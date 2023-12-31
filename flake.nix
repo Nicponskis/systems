@@ -24,6 +24,7 @@
     nixos.url = "github:nixos/nixpkgs/nixos-23.11";
     nixpkgs.follows = "nixos";
     latest.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixos-22-11.url = "github:nixos/nixpkgs/nixos-22.11";
 
     # For darwin hosts: it can be helpful to track this darwin-specific stable
     # channel equivalent to the `nixos-*` channels for NixOS. For one, these
@@ -89,6 +90,7 @@
     home,
     nix-portable,
     nixos,
+    nixos-22-11,
     nixos-hardware,
     nur,
     nvfetcher,
@@ -100,11 +102,22 @@
 
       # channelsConfig = {allowUnfree = true;};
 
-      channels = {
+      channels = rec {
         nixos = {
           # TODO(Dave): Do `imports` here actually matter??
           imports = [(digga.lib.importOverlays ./overlays)];
           overlays = [ ];
+        };
+        older-nixos-with-overlays = nixos-with-overlays // {
+          imports = [(digga.lib.importOverlays ./overlays)];
+          config.input = inputs.nixos-22-11;
+          config.overlays = nixos-with-overlays.config.overlays ++ [
+            (final: prev: { eza = final.runCommand "symlink-exa" {} ''
+              mkdir -p $out/bin
+              ln -s ${final.exa}/bin/exa $out/bin/eza
+            '';
+            })
+          ];
         };
         nixos-with-overlays = {
           # TODO(Dave): Do `imports` here actually matter??
@@ -116,7 +129,7 @@
           config.config.permittedInsecurePackages = [
             "qtwebkit-5.212.0-alpha4"
           ];
-          config.input = nixos;
+          config.input = inputs.nixos;
 
           config.overlays = [
             # Get Rasp PI to retain clock value across reboots
