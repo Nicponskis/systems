@@ -768,7 +768,7 @@ in {
   };
 
   services.xserver = {
-    autorun = false;
+    autorun = true;
 
     # Enable the X11 windowing system.
     enable = true;
