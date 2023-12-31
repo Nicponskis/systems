@@ -112,7 +112,7 @@
         };
         older-nixos-with-overlays = nixos-with-overlays // {
           imports = [(digga.lib.importOverlays ./overlays)];
-          config.input = inputs.nixos-22-11;
+          config.input = inputs.nixos-23-05;
           config.overlays = nixos-with-overlays.config.overlays ++ [
             (final: prev: { eza = final.runCommand "symlink-exa" {} ''
               mkdir -p $out/bin
