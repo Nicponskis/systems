@@ -263,25 +263,11 @@ in {
       wlan0.macAddress = "B8:27:EB:F1:A6:F7";
       # Cloned from ASUS
       #wlan0.macAddress = "9C:5C:8E:8B:10:CC";
-
-      #bridge0 = {
-      #  name = "bridge0";
-      #  ipAddress = "10.3.14.159";
-      #  prefixLength = 24;
-      #  virtual = true;
-      #};
     };
-    #bridges = {
-    #  bridge0 = {
-    #    interfaces = ["wlan0" "eth0"];
-    #    rstp = false;
-    #  };
-    #};
 
     # Configure network proxy if necessary
     # proxy.default = "http://user:password@proxy:port/";
     # proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
 
     # Open ports in the firewall.
     firewall.allowedTCPPorts = [
