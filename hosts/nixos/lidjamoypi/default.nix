@@ -216,7 +216,7 @@ in {
 
   hardware = {
     # Better than `allowNonFree` ?
-    enableRedistributableFirmware = false;
+    enableRedistributableFirmware = true;
 
     opengl.enable = true;
   };
