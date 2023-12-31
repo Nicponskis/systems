@@ -230,7 +230,7 @@
           # set host-specific properties here
           arm-builder-west.system = "aarch64-linux";
           lidjamoypi.system = "aarch64-linux";
-          lidjamoypi.channelName = "older-nixos-with-overlays";
+          # lidjamoypi.channelName = "older-nixos-with-overlays";
           stagingfreshlybakednyc.system = "aarch64-linux";
           wwwfreshlybakednyc.system = "aarch64-linux";
         };
