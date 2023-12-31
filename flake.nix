@@ -25,6 +25,7 @@
     nixpkgs.follows = "nixos";
     latest.url = "github:nixos/nixpkgs/nixos-unstable";
     nixos-22-11.url = "github:nixos/nixpkgs/nixos-22.11";
+    nixos-23-05.url = "github:nixos/nixpkgs/nixos-23.05";
 
     # For darwin hosts: it can be helpful to track this darwin-specific stable
     # channel equivalent to the `nixos-*` channels for NixOS. For one, these
@@ -91,6 +92,7 @@
     nix-portable,
     nixos,
     nixos-22-11,
+    nixos-23-05,
     nixos-hardware,
     nur,
     nvfetcher,
