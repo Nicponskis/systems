@@ -39,7 +39,11 @@ let
           #bsnes-mercury-performance # SNES
           snes9x # SNES
           # snes9x2010 # SNES  # Haven't needed to use this one yet, so removing it for now.
-          mupen64plus # N64
+
+          # TODO(Dave): Disabled because it wasn't building on 23.05, but we don't intend to
+          # stay there long.
+          #
+          # mupen64plus # N64
           picodrive # Sega Genesis
           beetle-psx-hw # Playstation
         ]
