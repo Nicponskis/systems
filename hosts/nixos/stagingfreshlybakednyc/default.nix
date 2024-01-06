@@ -328,9 +328,11 @@ in {
         sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
       };
 
+      ##################################################
+      # Site building with Elementor
       elementor = {
-        version = "3.18.2";
-        sha256 = "sha256-O0f5ngjykALcYUVddZgJx6BBKkx1T47YRUmpM6tc1YA=";
+        version = "3.18.3";
+        sha256 = "sha256-gcGwdiTMTkfFSSYzBM6xIvx29YVASZOMndMn4Qq4wzA=";
         patches = [
           (pkgs.fetchurl {
             name = "always-pro";
@@ -340,18 +342,39 @@ in {
         ];
       };
 
-      #########################
-      # Site backups.
-      all-in-one-wp-migration = rec {
-        version = "7.79";
-        sha256 = "sha256-eyWIupl96qG2oz0tjGMGKKH8++yTvW3V1+mcr9/i/wA=";
-        postInstall = "ln -s ../../${ai1Name}-storage $out/storage";
+      essential-addons-for-elementor-lite = {
+        version = "5.9.3";
+        sha256 = "sha256-GupA1U4f/7Kkgle6m40XeS9BMGhSFCYrjV59Yl0ADLA=";
       };
 
-      backup-backup = {
-        version = "1.2.9";
-        sha256 = "sha256-tKco8umdPIzdurQdCeOeNMLfMpb7Jgk6YohQHq+sPgM=";
+      header-footer-elementor = {
+        version = "1.6.22";
+        sha256 = "sha256-gZVSRxaIwwE62pbo8LB+Ut3HQ6fOd/DEJHKaqBKPfJI=";
       };
+
+      royal-elementor-addons = {
+        # https://downloads.wordpress.org/plugin/royal-elementor-addons.1.3.85.zip
+        version = "1.3.84";
+        sha256 = "sha256-aqO/IgYCjNXmQKAOwHwFEh3XA7Xvfc4+mF8sL/Cy2ig=";
+      };
+
+      unlimited-elements-for-elementor = {
+        version = "1.5.88";
+        sha256 = "sha256-giAT70eYLolL1atxN2gx4i+YiYTB9KRVXYDv9X352v4=";
+      };
+
+      #########################
+      # Site backups.
+      # all-in-one-wp-migration = rec {
+      #   version = "7.79";
+      #   sha256 = "sha256-eyWIupl96qG2oz0tjGMGKKH8++yTvW3V1+mcr9/i/wA=";
+      #   postInstall = "ln -s ../../${ai1Name}-storage $out/storage";
+      # };
+
+      # backup-backup = {
+      #   version = "1.2.9";
+      #   sha256 = "sha256-tKco8umdPIzdurQdCeOeNMLfMpb7Jgk6YohQHq+sPgM=";
+      # };
 
       blog2social = {
         version = "7.3.4";
@@ -363,10 +386,10 @@ in {
         sha256 = "sha256-js1gUbIO3h0c4G7YJPCbGK5uwP6n6WWnioMZUh/homs=";
       };
 
-      updraftplus = {
-        version = "1.23.9";
-        sha256 = "sha256-rb+FF/AOH8zQNTUKi13dv2vamlIHgNc0al4qcq+qJkc=";
-      };
+      # updraftplus = {
+      #   version = "1.23.9";
+      #   sha256 = "sha256-rb+FF/AOH8zQNTUKi13dv2vamlIHgNc0al4qcq+qJkc=";
+      # };
       #########################
     });
     } /*hackForThirdpartyPackages)*/;
@@ -378,26 +401,34 @@ in {
         name = "civicrm";
         version = "5.56.0";
         url = "https://storage.googleapis.com/${name}/${name}-stable/${version}/${name}-${version}-wordpress.zip";
-        /*hash*/ sha256 = "sha256-XsNFxVL0LF+OHlsqjjTV41x9ERLwMDq9BnKKP3Px2aI=";
+        sha256 = "sha256-XsNFxVL0LF+OHlsqjjTV41x9ERLwMDq9BnKKP3Px2aI=";
+      };
+      plugins.elementor-pro = pkgs.fetchzip rec {
+        name = "elementor-pro";
+        version = "3.18.3";  # is this ok?  Copied from above.
+        # url = "https://my.elementor.com/?download_file=14283270&order=wc_order_PgvZ1QIv1wRbj&uid=f4e4886cf7764dc03ce56f665ea4c50fd2c9b356c96f28db9dc591785867db6d&key=801e3aaf-2b4e-46d0-907d-88cc4a14f4a7&email=dave.nicponski@gmail.com";  # Saved to my Google Drive below
+        url = "https://drive.usercontent.google.com/uc?id=1Prrruv6wFp6XIcha23RMEnwQUZqpNaro&export=download";
+        sha256 = "sha256-kNkvZEYXeZgkhLWcvDf7VCC2eoSwgp2+4J5ISzSEf3E=";
+        extension = "zip";
       };
       themes.geist = pkgs.fetchzip rec {
         name = "geist";
         version = "2.0.3";
         url = "https://github.com/christophery/geist/archive/refs/tags/${version}.zip";
-        /*hash*/ sha256 = "sha256-c85oRhqu5E5IJlpgqKJRQITur1W7x40obOvHZbPevzU=";
+        sha256 = "sha256-c85oRhqu5E5IJlpgqKJRQITur1W7x40obOvHZbPevzU=";
       };
     };
 
     wpp = pkgs.wordpressPackages.extend (self: super:
       lib.mapAttrs (typePlural: v: (
         super."${typePlural}".extend (_: _:
-          lib.mapAttrs (pname: data:
+          lib.recursiveUpdate (lib.mapAttrs (pname: data:
             (pkgs.wordpressPackages.mkOfficialWordpressDerivation {
               inherit pname;
               type = lib.removeSuffix "s" typePlural;
               data = data // { path = "${pname}/tags/${data.version}"; };
             }).overrideAttrs (self: super: (builtins.removeAttrs data ["type" "pname" "version" "passthru"]))
-          ) v
+          ) v) (hackForThirdpartyPackages.${typePlural} or {})
         )
       )) extra);
 
@@ -454,16 +485,23 @@ in {
           ##########
           # Manually added items...
           blog2social
+
+          # Site editing
           elementor
+          elementor-pro
+          essential-addons-for-elementor-lite
+          header-footer-elementor
+          royal-elementor-addons
+          unlimited-elements-for-elementor
 
           # Compliance
           age-gate  # TODO(Dave): Push this upstream.  # TODO(Dave): What do you mean "upstream" here?
 
           # Site Backups
-          all-in-one-wp-migration
-          backup-backup
+          # all-in-one-wp-migration
+          # backup-backup
           duplicator
-          updraftplus
+          # updraftplus
         ;
       };
 
