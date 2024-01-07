@@ -186,6 +186,8 @@ in {
       changedetection-io.environment.DEBUG = "-browserless:chrome-helper*,browserless:server";  # Disable log spam
       changedetection-io.environment.PLAYWRIGHT_DRIVER_URL =
         "ws://localhost:4444/?stealth=1&--disable-web-security=true";
+      # Limit resource consumption, as this container is kinda heavyweight
+      changedetection-io-playwright.extraOptions = [ "--cpu-shares=512" "--memory=512m" ];
       changedetection-io-playwright.image =
         lib.mkForce
           # "browserless/chrome:arm64";  # Version pinned below
@@ -199,7 +201,10 @@ in {
         environment.BASE_URL = "https://sitechanges.dave.nicponski.dev/";
         environment.HIDE_REFERER = "true";
         environment.USE_X_SETTINGS = "1";
-        extraOptions = [ "--network=host" ];
+        extraOptions = [
+          "--network=host"  # Needs to see the other container, and for some reason it didn't see it without this.
+          "--cpu-shares=768"  # Keep system otherwise responsive.
+        ];
         ports = [ "127.0.0.1:5000:5000" ];
         volumes = [ "/var/lib/changedetection-io:/datastore" ];
       };
