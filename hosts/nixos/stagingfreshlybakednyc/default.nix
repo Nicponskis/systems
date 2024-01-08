@@ -17,6 +17,7 @@ let
     "test-secret"
   ];
 
+  basicAuthString = "dave:letmein@";
   changedetection-io-port = 5000;
   freshlyBakedDomain = "freshlybaked.nyc";
   hostname = "stagingfreshlybakednyc";
@@ -169,7 +170,7 @@ in {
   # Watch webpages for changes
   services.changedetection-io = {
     enable = true;
-    baseURL = "https://sitechanges.dave.nicponski.dev/";
+    baseURL = "https://${basicAuthString}sitechanges.dave.nicponski.dev/";
     port = changedetection-io-port;  # Defaults to port 5000
 
     playwrightSupport = true;
@@ -189,7 +190,7 @@ in {
       changedetection-io.environment.PLAYWRIGHT_DRIVER_URL =
         "ws://localhost:4444/?stealth=1&--disable-web-security=true";
       # Limit resource consumption, as this container is kinda heavyweight
-      changedetection-io-playwright.extraOptions = [ "--cpu-shares=512" "--memory=512m" ];
+      changedetection-io-playwright.extraOptions = [ "--cpu-shares=256" "--memory=512m" ];
       changedetection-io-playwright.image =
         lib.mkForce
           # "browserless/chrome:arm64";  # Version pinned below
