@@ -439,6 +439,7 @@ in {
     stateContentDirMapping.all-in-one-wb-migration-storage = "${ai1Name}-storage";
     stateContentDirMapping.backup-migration = "backup-migration";
     stateContentDirMapping.duplicator = "backups-dup-lite";
+    stateContentDirMapping.elementor-uploads = "elementor_uploads";
   test = {
     wpp = wpp;
     origWpp = pkgs.wordpressPackages;
