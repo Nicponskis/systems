@@ -40,6 +40,14 @@ let
       ${loc}
     chown wordpress:nginx ${loc}
   '';
+
+  recursiveMergeAttrs = them: builtins.foldl' (lhs: rhs: lib.recursiveUpdate lhs rhs) {} them;
+  containersSlice = "machine-change_detection_vms";
+  sliced = cpuWeight: me: (recursiveMergeAttrs [
+    me
+    { serviceConfig.Slice = containersSlice; }
+    (lib.optionalAttrs (! (isNull cpuWeight)) { serviceConfig.CPUWeight = cpuWeight; })
+  ]);
 in {
   imports = [
     "${modulesPath}/virtualisation/amazon-image.nix"
@@ -183,6 +191,7 @@ in {
       # Tacky fix for using the docker images on ARM
       changedetection-io.dependsOn = [ "changedetection-io-webdriver" ];
       changedetection-io.environment.WEBDRIVER_URL = "localhost:4444";
+      changedetection-io-webdriver.extraOptions = [ "--cgroup-parent=${containersSlice}.slice" ];
       changedetection-io-webdriver.image =
         lib.mkForce "seleniarm/standalone-chromium";  # TODO(Dave): Pin version!
     })
@@ -192,7 +201,13 @@ in {
       changedetection-io.environment.PLAYWRIGHT_DRIVER_URL =
         "ws://localhost:4444/?stealth=1&--disable-web-security=true";
       # Limit resource consumption, as this container is kinda heavyweight
-      changedetection-io-playwright.extraOptions = [ "--cpu-shares=256" "--memory=512m" ];
+      changedetection-io-playwright.extraOptions = [
+        "--cpu-shares=256"
+        "--memory=512m"
+        "--runtime-flag=systemd-cgroup"
+        "--runtime-flag=cgroup-manager=systemd"
+        "--cgroup-parent=${containersSlice}-chrome.slice"
+      ];
       changedetection-io-playwright.image =
         lib.mkForce
           # "browserless/chrome:arm64";  # Version pinned below
@@ -209,6 +224,7 @@ in {
         extraOptions = [
           "--network=host"  # Needs to see the other container, and for some reason it didn't see it without this.
           "--cpu-shares=768"  # Keep system otherwise responsive.
+          "--cgroup-parent=${containersSlice}.slice"
         ];
         ports = [ "127.0.0.1:5000:5000" ];
         volumes = [ "/var/lib/changedetection-io:/datastore" ];
@@ -216,14 +232,14 @@ in {
     }
   ];
   systemd.services.changedetection-io.enable = false;
+  systemd.services.changedetection-io-playwright.serviceConfig.TimeoutStopSec = 15;  # Kill processes MUCH faster on stop
   # Sacrifice the change-detection services if we run out of RAM.  They can be... resource hungry...
-  systemd.services."podman-changedetection-io" = lib.mkIf config.services.changedetection-io.enable { serviceConfig.OOMScoreAdjust=500; };
-  systemd.services."podman-changedetection-io-playwright" = lib.mkIf config.services.changedetection-io.playwrightSupport { serviceConfig.OOMScoreAdjust=501; };
-  systemd.services."podman-changedetection-io-webdriver" = lib.mkIf config.services.changedetection-io.webDriverSupport { serviceConfig.OOMScoreAdjust=501; };
+  systemd.services."podman-changedetection-io" = lib.mkIf config.services.changedetection-io.enable (sliced 50 { serviceConfig.OOMScoreAdjust=500; });
+  systemd.services."podman-changedetection-io-playwright" = lib.mkIf config.services.changedetection-io.playwrightSupport (sliced 25 { serviceConfig.OOMScoreAdjust=501; });
+  systemd.services."podman-changedetection-io-webdriver" = lib.mkIf config.services.changedetection-io.webDriverSupport (sliced 25 { serviceConfig.OOMScoreAdjust=501; });
   systemd.tmpfiles.rules = [
     "d '/var/lib/changedetection-io' 0750 changedetection-io changedetection-io - -"
 
-    ""
     "d '/var/lib/wordpress/overlay' 0750 wordpress nginx - -"
     "d '/var/lib/wordpress/overlay/upper' 0750 wordpress nginx - -"
     "d '/var/lib/wordpress/overlay/workdir' 0750 wordpress nginx - -"
@@ -269,6 +285,7 @@ in {
     recommendedGzipSettings = true;
     recommendedOptimisation = true;
     recommendedTlsSettings = true;
+    recommendedProxySettings = true;
 
     # GRRRrrr...  These seem to be used in the install directory path, sadly.
     # virtualHosts."${freshlyBakedDomain}" = {
@@ -283,6 +300,11 @@ in {
 
     virtualHosts."sitechanges.dave.nicponski.dev" = defaults // {
       basicAuth = { dave = "letmein"; };
+      extraConfig = ''
+        proxy_connect_timeout 75s;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+      '';
       locations."/" = {
         proxyPass = "http://127.0.0.1:${toString changedetection-io-port}";
         proxyWebsockets = true; # needed if you need to use WebSocket
@@ -543,6 +565,27 @@ in {
     script = "systemctl restart 'podman-changedetection-io*.service'";
     serviceConfig.Type = "oneshot";
   };
+
+  systemd.slices."${containersSlice}" = {
+    description = "Shared resource limits on all VMs and containers used by ChangeDetection-IO";
+    sliceConfig = {
+      CPUAccounting = true;
+      CPUQuota = "90%";  # <1 CPU max
+      CPUWeight = 50;  # Defaults of 100.  Consider "idle" magic string for the chrome container
+      StartupCPUWeight = 75;
+
+      MemoryAccounting = true;
+      MemoryLow = "256M";
+      MemoryHigh = "512M";
+      MemoryMax = "768M";
+    };
+  };
+  systemd.slices."${containersSlice}-chrome" = {
+    description = "Super limited CPU for the Chrome containers";
+    # sliceConfig.CPUWeight = "idle";
+    sliceConfig.CPUWeight = "20";
+  };
+
   systemd.timers.restart-changedetection-containers-timer = {
     description = "Periodically restart changedetection-io-playwright";
     wantedBy = [ "timers.target" ];
