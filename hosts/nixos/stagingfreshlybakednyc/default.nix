@@ -253,6 +253,7 @@ in {
       basicAuth = {
         dave = "letmein";
         pam = "letmein";
+        john = "letmein";
       };
       enableACME = true;
       forceSSL = true;
