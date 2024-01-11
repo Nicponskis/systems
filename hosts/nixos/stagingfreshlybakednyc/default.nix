@@ -57,8 +57,8 @@ in {
     bashInteractive
   ];
   environment.shellAliases = {
-      l = "${pkgs.eza}/bin/eza -la --color=always";
-      ls = "${pkgs.eza}/bin/eza -a --color=always";
+      l = "${pkgs.eza}/bin/eza -lag --color=always";
+      ls = "${pkgs.eza}/bin/eza -ag --color=always";
 
       less = "less -R";
       LESS = "less -R --no-lessopen";
