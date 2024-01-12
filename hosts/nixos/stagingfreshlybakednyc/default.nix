@@ -322,7 +322,7 @@ in {
   '';
 
   services.odoo = {
-    enable = true;
+    enable = false;
     domain = "crm.staging.${freshlyBakedDomain}";
     settings.options = {
       limit_memory_soft = 536870912;  # 512MB
