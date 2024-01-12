@@ -70,7 +70,9 @@ in {
     #hexyl
     htop
     inetutils
+    libcgroup
     lsof
+    memtree
     ncdu
     silver-searcher
     viddy # better `watch`
