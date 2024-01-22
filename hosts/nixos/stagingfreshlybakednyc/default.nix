@@ -345,13 +345,19 @@ in {
 
   services.wordpressWithPluginState = let
     ai1Name = "ai1wm-backups";
-    defaultRevision = "3012590";
+    defaultPluginRevision = "3012590";
+    defaultThemeRevision = "214891";
 
     extra = {
-      plugins = (lib.mapAttrs (k: v: v // { rev = v.rev or defaultRevision; }) {
+      plugins = (lib.mapAttrs (k: v: v // { rev = v.rev or defaultPluginRevision; }) {
         age-gate = {
           version = "3.2.0";
           sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
+        };
+
+        fullwidth-templates = {
+          version = "1.1.1";
+          sha256 = "sha256-JrYnCHeWkfA9J2Chj5NjRgkXuOQMqAXmvlrTgR59pvs=";
         };
 
         ##################################################
@@ -383,6 +389,13 @@ in {
           sha256 = "sha256-giAT70eYLolL1atxN2gx4i+YiYTB9KRVXYDv9X352v4=";
         };
 
+        ##################################################
+        # Site building with Kadence (free Elementor alternative)
+        kadence-blocks = {
+          version = "3.1.26";
+          sha256 = "sha256-0NlSPoNrIs2OPhTvfW/nCBNVV68E8dW+o6zj0ds0n7g=";
+        };
+
         #########################
         # Site backups.
         # all-in-one-wp-migration = rec {
@@ -410,8 +423,24 @@ in {
         #   version = "1.23.9";
         #   sha256 = "sha256-rb+FF/AOH8zQNTUKi13dv2vamlIHgNc0al4qcq+qJkc=";
         # };
+
+        ##################################################
+        # Data collection
+        optinmonster = {
+          version = "2.15.1";
+          sha256 = "sha256-dni6XwJMzEws0ErLMJRPig9KlJ+1LuWvqYzURJ3jJYM=";
+        };
+        wpforms-lite = {
+          version = "1.8.5.3";
+          sha256 = "sha256-dXKpsChEa34Vc/JVa4RF0xxhwlA9TQMD7Fg294PlRPY=";
+        };
+
         #########################
       });
+      themes = {
+        # NOTA BENE: Must be present even if empty for `hackForThirdParty` to work..  :(
+        # TODO(dave): Fix this.  This sucks!
+      };
     };
 
     hackForThirdpartyPackages = {
@@ -421,21 +450,27 @@ in {
         name = "civicrm";
         version = "5.56.0";
         url = "https://storage.googleapis.com/${name}/${name}-stable/${version}/${name}-${version}-wordpress.zip";
-        sha256 = "sha256-XsNFxVL0LF+OHlsqjjTV41x9ERLwMDq9BnKKP3Px2aI=";
+        hash = "sha256-XsNFxVL0LF+OHlsqjjTV41x9ERLwMDq9BnKKP3Px2aI=";
       };
       plugins.elementor-pro = pkgs.fetchzip rec {
         name = "elementor-pro";
         version = "3.18.3";  # is this ok?  Copied from above.
         # url = "https://my.elementor.com/?download_file=14283270&order=wc_order_PgvZ1QIv1wRbj&uid=f4e4886cf7764dc03ce56f665ea4c50fd2c9b356c96f28db9dc591785867db6d&key=801e3aaf-2b4e-46d0-907d-88cc4a14f4a7&email=dave.nicponski@gmail.com";  # Saved to my Google Drive below
         url = "https://drive.usercontent.google.com/uc?id=1Prrruv6wFp6XIcha23RMEnwQUZqpNaro&export=download";
-        sha256 = "sha256-kNkvZEYXeZgkhLWcvDf7VCC2eoSwgp2+4J5ISzSEf3E=";
+        hash = "sha256-kNkvZEYXeZgkhLWcvDf7VCC2eoSwgp2+4J5ISzSEf3E=";
         extension = "zip";
       };
       themes.geist = pkgs.fetchzip rec {
         name = "geist";
         version = "2.0.3";
         url = "https://github.com/christophery/geist/archive/refs/tags/${version}.zip";
-        sha256 = "sha256-c85oRhqu5E5IJlpgqKJRQITur1W7x40obOvHZbPevzU=";
+        hash = "sha256-c85oRhqu5E5IJlpgqKJRQITur1W7x40obOvHZbPevzU=";
+      };
+      themes.kadence = pkgs.fetchzip rec {
+        name = "kadence";
+        version = "1.1.51";
+        url = "https://downloads.wordpress.org/theme/kadence.${version}.zip";
+        hash = "sha256-GugjLYNfm5vx2U8lnKONe8iqS/9LJMh6AFXSGnOFSBQ=";
       };
     };
 
@@ -509,7 +544,9 @@ in {
           elementor
           elementor-pro
           essential-addons-for-elementor-lite
+          fullwidth-templates
           header-footer-elementor
+          kadence-blocks
           unlimited-elements-for-elementor
 
           # Compliance
@@ -520,10 +557,20 @@ in {
           # backup-backup
           duplicator
           # updraftplus
+
+
+          # Data collection
+          optinmonster
+          wpforms-lite
         ;
       };
 
-      themes = { inherit (wpp.themes) twentytwentytwo twentytwentythree; };
+      themes = {
+        inherit (wpp.themes)
+          kadence
+          twentytwentytwo
+          twentytwentythree;
+      };
 
     };
 
