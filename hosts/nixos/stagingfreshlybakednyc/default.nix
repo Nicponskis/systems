@@ -482,7 +482,7 @@ in {
 
       database = {
         createLocally = true;
-        name = "wp_staging_freshlybaked";
+        name = "wp_staging2_freshlybaked";
         tablePrefix = "wp_staging_fb_";
       };
 
