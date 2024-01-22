@@ -347,78 +347,78 @@ in {
     ai1Name = "ai1wm-backups";
     defaultRevision = "3012590";
 
-    extra = /*(lib.recursiveUpdate*/ {
-    plugins = (lib.mapAttrs (k: v: v // { rev = v.rev or defaultRevision; }) {
-      age-gate = {
-        version = "3.2.0";
-        sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
-      };
+    extra = {
+      plugins = (lib.mapAttrs (k: v: v // { rev = v.rev or defaultRevision; }) {
+        age-gate = {
+          version = "3.2.0";
+          sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
+        };
 
-      ##################################################
-      # Site building with Elementor
-      elementor = {
-        version = "3.18.3";
-        sha256 = "sha256-gcGwdiTMTkfFSSYzBM6xIvx29YVASZOMndMn4Qq4wzA=";
-        patches = [
-          (pkgs.fetchurl {
-            name = "always-pro";
-            url = "https://github.com/virusdave/elementor/commit/e8e699a1e00411fce2e8bf21d18f70e472d25b0a.patch";
-            hash = "sha256-woMJRMLDDNxTu0HT+tHHPxLEjgzab1zO0Jk/9ZNl668=";
-          })
-        ];
-      };
+        ##################################################
+        # Site building with Elementor
+        elementor = {
+          version = "3.18.3";
+          sha256 = "sha256-gcGwdiTMTkfFSSYzBM6xIvx29YVASZOMndMn4Qq4wzA=";
+          patches = [
+            (pkgs.fetchurl {
+              name = "always-pro";
+              url = "https://github.com/virusdave/elementor/commit/e8e699a1e00411fce2e8bf21d18f70e472d25b0a.patch";
+              hash = "sha256-woMJRMLDDNxTu0HT+tHHPxLEjgzab1zO0Jk/9ZNl668=";
+            })
+          ];
+        };
 
-      essential-addons-for-elementor-lite = {
-        version = "5.9.3";
-        sha256 = "sha256-GupA1U4f/7Kkgle6m40XeS9BMGhSFCYrjV59Yl0ADLA=";
-      };
+        essential-addons-for-elementor-lite = {
+          version = "5.9.3";
+          sha256 = "sha256-GupA1U4f/7Kkgle6m40XeS9BMGhSFCYrjV59Yl0ADLA=";
+        };
 
-      header-footer-elementor = {
-        version = "1.6.22";
-        sha256 = "sha256-gZVSRxaIwwE62pbo8LB+Ut3HQ6fOd/DEJHKaqBKPfJI=";
-      };
+        header-footer-elementor = {
+          version = "1.6.22";
+          sha256 = "sha256-gZVSRxaIwwE62pbo8LB+Ut3HQ6fOd/DEJHKaqBKPfJI=";
+        };
 
-      royal-elementor-addons = {
-        # https://downloads.wordpress.org/plugin/royal-elementor-addons.1.3.85.zip
-        version = "1.3.84";
-        sha256 = "sha256-aqO/IgYCjNXmQKAOwHwFEh3XA7Xvfc4+mF8sL/Cy2ig=";
-      };
+        royal-elementor-addons = {
+          # https://downloads.wordpress.org/plugin/royal-elementor-addons.1.3.85.zip
+          version = "1.3.84";
+          sha256 = "sha256-aqO/IgYCjNXmQKAOwHwFEh3XA7Xvfc4+mF8sL/Cy2ig=";
+        };
 
-      unlimited-elements-for-elementor = {
-        version = "1.5.88";
-        sha256 = "sha256-giAT70eYLolL1atxN2gx4i+YiYTB9KRVXYDv9X352v4=";
-      };
+        unlimited-elements-for-elementor = {
+          version = "1.5.88";
+          sha256 = "sha256-giAT70eYLolL1atxN2gx4i+YiYTB9KRVXYDv9X352v4=";
+        };
 
-      #########################
-      # Site backups.
-      # all-in-one-wp-migration = rec {
-      #   version = "7.79";
-      #   sha256 = "sha256-eyWIupl96qG2oz0tjGMGKKH8++yTvW3V1+mcr9/i/wA=";
-      #   postInstall = "ln -s ../../${ai1Name}-storage $out/storage";
-      # };
+        #########################
+        # Site backups.
+        # all-in-one-wp-migration = rec {
+        #   version = "7.79";
+        #   sha256 = "sha256-eyWIupl96qG2oz0tjGMGKKH8++yTvW3V1+mcr9/i/wA=";
+        #   postInstall = "ln -s ../../${ai1Name}-storage $out/storage";
+        # };
 
-      # backup-backup = {
-      #   version = "1.2.9";
-      #   sha256 = "sha256-tKco8umdPIzdurQdCeOeNMLfMpb7Jgk6YohQHq+sPgM=";
-      # };
+        # backup-backup = {
+        #   version = "1.2.9";
+        #   sha256 = "sha256-tKco8umdPIzdurQdCeOeNMLfMpb7Jgk6YohQHq+sPgM=";
+        # };
 
-      blog2social = {
-        version = "7.3.4";
-        sha256 = "sha256-q50RTKGpH4Cwmk96zFjUzXtNo6htly8pqFEPcbuwQI4=";
-      };
+        blog2social = {
+          version = "7.3.4";
+          sha256 = "sha256-q50RTKGpH4Cwmk96zFjUzXtNo6htly8pqFEPcbuwQI4=";
+        };
 
-      duplicator = {
-        version = "1.5.7.1";
-        sha256 = "sha256-js1gUbIO3h0c4G7YJPCbGK5uwP6n6WWnioMZUh/homs=";
-      };
+        duplicator = {
+          version = "1.5.7.1";
+          sha256 = "sha256-js1gUbIO3h0c4G7YJPCbGK5uwP6n6WWnioMZUh/homs=";
+        };
 
-      # updraftplus = {
-      #   version = "1.23.9";
-      #   sha256 = "sha256-rb+FF/AOH8zQNTUKi13dv2vamlIHgNc0al4qcq+qJkc=";
-      # };
-      #########################
-    });
-    } /*hackForThirdpartyPackages)*/;
+        # updraftplus = {
+        #   version = "1.23.9";
+        #   sha256 = "sha256-rb+FF/AOH8zQNTUKi13dv2vamlIHgNc0al4qcq+qJkc=";
+        # };
+        #########################
+      });
+    };
 
     hackForThirdpartyPackages = {
       # Copied from `pkgs/servers/web-apps/wordpress/packages/thirdparty.nix` until this lands or can be patched in:
@@ -459,9 +459,6 @@ in {
       )) extra);
 
   in rec {
-    # stateContentDirMapping.all-in-one-wb-migration = ai1Name; # "ai1wm-backups";
-    # stateContentDirMapping.all-in-one-wb-migration-storage = "${ai1Name}-storage";
-    # stateContentDirMapping.backup-migration = "backup-migration";
     stateContentDirMapping.duplicator = "backups-dup-lite";
     stateContentDirMapping.elementor-uploads = "elementor_uploads";
   test = {
