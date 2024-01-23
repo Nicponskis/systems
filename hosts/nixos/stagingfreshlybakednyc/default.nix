@@ -378,12 +378,6 @@ in {
           sha256 = "sha256-gZVSRxaIwwE62pbo8LB+Ut3HQ6fOd/DEJHKaqBKPfJI=";
         };
 
-        royal-elementor-addons = {
-          # https://downloads.wordpress.org/plugin/royal-elementor-addons.1.3.85.zip
-          version = "1.3.84";
-          sha256 = "sha256-aqO/IgYCjNXmQKAOwHwFEh3XA7Xvfc4+mF8sL/Cy2ig=";
-        };
-
         unlimited-elements-for-elementor = {
           version = "1.5.88";
           sha256 = "sha256-giAT70eYLolL1atxN2gx4i+YiYTB9KRVXYDv9X352v4=";
@@ -516,7 +510,6 @@ in {
           elementor-pro
           essential-addons-for-elementor-lite
           header-footer-elementor
-          royal-elementor-addons
           unlimited-elements-for-elementor
 
           # Compliance
