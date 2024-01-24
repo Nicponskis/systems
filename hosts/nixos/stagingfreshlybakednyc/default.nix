@@ -344,7 +344,6 @@ in {
   };
 
   services.wordpressWithPluginState = let
-    ai1Name = "ai1wm-backups";
     defaultPluginRevision = "3012590";
     defaultThemeRevision = "214891";
 
@@ -353,6 +352,11 @@ in {
         age-gate = {
           version = "3.2.0";
           sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
+        };
+
+        blog2social = {
+          version = "7.3.4";
+          sha256 = "sha256-q50RTKGpH4Cwmk96zFjUzXtNo6htly8pqFEPcbuwQI4=";
         };
 
         fullwidth-templates = {
@@ -398,31 +402,10 @@ in {
 
         #########################
         # Site backups.
-        # all-in-one-wp-migration = rec {
-        #   version = "7.79";
-        #   sha256 = "sha256-eyWIupl96qG2oz0tjGMGKKH8++yTvW3V1+mcr9/i/wA=";
-        #   postInstall = "ln -s ../../${ai1Name}-storage $out/storage";
-        # };
-
-        # backup-backup = {
-        #   version = "1.2.9";
-        #   sha256 = "sha256-tKco8umdPIzdurQdCeOeNMLfMpb7Jgk6YohQHq+sPgM=";
-        # };
-
-        blog2social = {
-          version = "7.3.4";
-          sha256 = "sha256-q50RTKGpH4Cwmk96zFjUzXtNo6htly8pqFEPcbuwQI4=";
-        };
-
         duplicator = {
           version = "1.5.7.1";
           sha256 = "sha256-js1gUbIO3h0c4G7YJPCbGK5uwP6n6WWnioMZUh/homs=";
         };
-
-        # updraftplus = {
-        #   version = "1.23.9";
-        #   sha256 = "sha256-rb+FF/AOH8zQNTUKi13dv2vamlIHgNc0al4qcq+qJkc=";
-        # };
 
         ##################################################
         # Data collection
@@ -490,11 +473,14 @@ in {
   in rec {
     stateContentDirMapping.duplicator = "backups-dup-lite";
     stateContentDirMapping.elementor-uploads = "elementor_uploads";
-  test = {
-    wpp = wpp;
-    origWpp = pkgs.wordpressPackages;
-    extra = extra;
-  };
+
+    # TODO(dave): This is used for debugging wordpress site packages and themes.
+    # Should be innocuous, but remove it eventually.
+    test = {
+      wpp = wpp;
+      origWpp = pkgs.wordpressPackages;
+      extra = extra;
+    };
 
     sites."staging.${freshlyBakedDomain}" = {
       #####
@@ -553,11 +539,7 @@ in {
           age-gate  # TODO(Dave): Push this upstream.  # TODO(Dave): What do you mean "upstream" here?
 
           # Site Backups
-          # all-in-one-wp-migration
-          # backup-backup
           duplicator
-          # updraftplus
-
 
           # Data collection
           optinmonster
@@ -571,7 +553,6 @@ in {
           twentytwentytwo
           twentytwentythree;
       };
-
     };
 
     webserver = "nginx";
@@ -581,7 +562,6 @@ in {
     serviceConfig = {
       Type = "oneshot";
       TimeoutSec = 60;
-      # ExecStart = ''${pkgs.apprise}/bin/apprise -v -t \"System starting up\" -b \"FYI: System (${hostname}) is starting up\" 'json://ntfy.sh/?+X-Priority=high&:topic=vd420__notify_01' '';
       RemainAfterExit = "yes";
     };
 
