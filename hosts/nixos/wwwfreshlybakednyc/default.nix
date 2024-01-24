@@ -159,75 +159,158 @@ in {
   };
 
   services.journald.extraConfig = ''
-    SystemMaxUse=75M
+    SystemMaxUse=150M
     SystemMaxFileSize=15M
   '';
 
   services.wordpressWithPluginState = let
-    ai1Name = "ai1wm-backups";
-    defaultRevision = "2924143";
+    defaultPluginRevision = "3012590";
+    defaultThemeRevision = "214891";
 
-    extra.plugins = lib.mapAttrs (k: v: v // { rev = v.rev or defaultRevision; }) {
-      age-gate = {
-        version = "3.2.0";
-        sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
-      };
+    extra = {
+      plugins = (lib.mapAttrs (k: v: v // { rev = v.rev or defaultPluginRevision; }) {
+        age-gate = {
+          version = "3.2.0";
+          sha256 = "sha256-Qv1YX0zMnqs8KhpFqs6sSe0sXo2kNqGg9X8Jpo6Man8=";
+        };
 
-      elementor = {
-        version = "3.18.2";
-        sha256 = "sha256-mwuslBUAmm9q0F/CBmCFhPErVV1lku0eA9Ov80h4KKo=";
-        patches = [
-          (pkgs.fetchurl {
-            name = "always-pro";
-            url = "https://github.com/virusdave/elementor/commit/e8e699a1e00411fce2e8bf21d18f70e472d25b0a.patch";
-            hash = "sha256-woMJRMLDDNxTu0HT+tHHPxLEjgzab1zO0Jk/9ZNl668=";
-          })
-        ];
-      };
+        blog2social = {
+          version = "7.3.4";
+          sha256 = "sha256-q50RTKGpH4Cwmk96zFjUzXtNo6htly8pqFEPcbuwQI4=";
+        };
 
-      #########################
-      # Site backups.
-      all-in-one-wp-migration = rec {
-        version = "7.79";
-        sha256 = "sha256-gshOwU37iC3gYz53haNu4pVSSz3cfRATq1ykcwn1xTY=";
-        postInstall = "ln -s ../../${ai1Name}-storage $out/storage";
-      };
+        fullwidth-templates = {
+          version = "1.1.1";
+          sha256 = "sha256-JrYnCHeWkfA9J2Chj5NjRgkXuOQMqAXmvlrTgR59pvs=";
+        };
 
-      backup-backup = {
-        version = "1.2.9";
-        sha256 = "sha256-tKco8umdPIzdurQdCeOeNMLfMpb7Jgk6YohQHq+sPgM=";
-      };
+        ##################################################
+        # Site building with Elementor
+        elementor = {
+          version = "3.18.3";
+          sha256 = "sha256-gcGwdiTMTkfFSSYzBM6xIvx29YVASZOMndMn4Qq4wzA=";
+          patches = [
+            (pkgs.fetchurl {
+              name = "always-pro";
+              url = "https://github.com/virusdave/elementor/commit/e8e699a1e00411fce2e8bf21d18f70e472d25b0a.patch";
+              hash = "sha256-woMJRMLDDNxTu0HT+tHHPxLEjgzab1zO0Jk/9ZNl668=";
+            })
+          ];
+        };
 
-      duplicator = {
-        version = "1.5.7.1";
-        sha256 = "sha256-79LHNfh5+4xthtk9732Al38780zvRpSSvZJyUHSECM4=";
-      };
+        essential-addons-for-elementor-lite = {
+          version = "5.9.3";
+          sha256 = "sha256-GupA1U4f/7Kkgle6m40XeS9BMGhSFCYrjV59Yl0ADLA=";
+        };
 
-      updraftplus = {
-        version = "1.23.9";
-        sha256 = "sha256-zz2YGHvYnPUudhMA9SnKNQ4T8vR7XYx2GvpDpXg9o9c=";
+        header-footer-elementor = {
+          version = "1.6.22";
+          sha256 = "sha256-gZVSRxaIwwE62pbo8LB+Ut3HQ6fOd/DEJHKaqBKPfJI=";
+        };
+
+        unlimited-elements-for-elementor = {
+          version = "1.5.88";
+          sha256 = "sha256-giAT70eYLolL1atxN2gx4i+YiYTB9KRVXYDv9X352v4=";
+        };
+
+        ##################################################
+        # Site building with Kadence (free Elementor alternative)
+        kadence-blocks = {
+          version = "3.1.26";
+          sha256 = "sha256-0NlSPoNrIs2OPhTvfW/nCBNVV68E8dW+o6zj0ds0n7g=";
+        };
+
+        #########################
+        # Site backups.
+        duplicator = {
+          version = "1.5.7.1";
+          sha256 = "sha256-js1gUbIO3h0c4G7YJPCbGK5uwP6n6WWnioMZUh/homs=";
+        };
+
+        ##################################################
+        # Data collection
+        optinmonster = {
+          version = "2.15.1";
+          sha256 = "sha256-dni6XwJMzEws0ErLMJRPig9KlJ+1LuWvqYzURJ3jJYM=";
+        };
+        wpforms-lite = {
+          version = "1.8.5.3";
+          sha256 = "sha256-dXKpsChEa34Vc/JVa4RF0xxhwlA9TQMD7Fg294PlRPY=";
+        };
+
+        #########################
+      });
+      themes = {
+        # NOTA BENE: Must be present even if empty for `hackForThirdParty` to work..  :(
+        # TODO(dave): Fix this.  This sucks!
       };
-      #########################
     };
+
+    hackForThirdpartyPackages = {
+      # Copied from `pkgs/servers/web-apps/wordpress/packages/thirdparty.nix` until this lands or can be patched in:
+      # https://github.com/NixOS/nixpkgs/pull/275751
+      plugins.civicrm = pkgs.fetchzip rec {
+        name = "civicrm";
+        version = "5.56.0";
+        url = "https://storage.googleapis.com/${name}/${name}-stable/${version}/${name}-${version}-wordpress.zip";
+        hash = "sha256-XsNFxVL0LF+OHlsqjjTV41x9ERLwMDq9BnKKP3Px2aI=";
+      };
+      plugins.elementor-pro = pkgs.fetchzip rec {
+        name = "elementor-pro";
+        version = "3.18.3";  # is this ok?  Copied from above.
+        # url = "https://my.elementor.com/?download_file=14283270&order=wc_order_PgvZ1QIv1wRbj&uid=f4e4886cf7764dc03ce56f665ea4c50fd2c9b356c96f28db9dc591785867db6d&key=801e3aaf-2b4e-46d0-907d-88cc4a14f4a7&email=dave.nicponski@gmail.com";  # Saved to my Google Drive below
+        url = "https://drive.usercontent.google.com/uc?id=1Prrruv6wFp6XIcha23RMEnwQUZqpNaro&export=download";
+        hash = "sha256-kNkvZEYXeZgkhLWcvDf7VCC2eoSwgp2+4J5ISzSEf3E=";
+        extension = "zip";
+      };
+      themes.geist = pkgs.fetchzip rec {
+        name = "geist";
+        version = "2.0.3";
+        url = "https://github.com/christophery/geist/archive/refs/tags/${version}.zip";
+        hash = "sha256-c85oRhqu5E5IJlpgqKJRQITur1W7x40obOvHZbPevzU=";
+      };
+      themes.kadence = pkgs.fetchzip rec {
+        name = "kadence";
+        version = "1.1.51";
+        url = "https://downloads.wordpress.org/theme/kadence.${version}.zip";
+        hash = "sha256-GugjLYNfm5vx2U8lnKONe8iqS/9LJMh6AFXSGnOFSBQ=";
+      };
+    };
+
     wpp = pkgs.wordpressPackages.extend (self: super:
       lib.mapAttrs (typePlural: v: (
         super."${typePlural}".extend (_: _:
-          lib.mapAttrs (pname: data:
+          lib.recursiveUpdate (lib.mapAttrs (pname: data:
             (pkgs.wordpressPackages.mkOfficialWordpressDerivation {
               inherit pname;
               type = lib.removeSuffix "s" typePlural;
               data = data // { path = "${pname}/tags/${data.version}"; };
             }).overrideAttrs (self: super: (builtins.removeAttrs data ["type" "pname" "version" "passthru"]))
-          ) v
+          ) v) (hackForThirdpartyPackages.${typePlural} or {})
         )
       )) extra);
-  in {
-    stateContentDirMapping.all-in-one-wb-migration = ai1Name; # "ai1wm-backups";
-    stateContentDirMapping.all-in-one-wb-migration-storage = "${ai1Name}-storage";
-    stateContentDirMapping.backup-migration = "backup-migration";
+
+  in rec {
     stateContentDirMapping.duplicator = "backups-dup-lite";
+    stateContentDirMapping.elementor-uploads = "elementor_uploads";
+
+    # TODO(dave): This is used for debugging wordpress site packages and themes.
+    # Should be innocuous, but remove it eventually.
+    test = {
+      wpp = wpp;
+      origWpp = pkgs.wordpressPackages;
+      extra = extra;
+    };
 
     sites."${freshlyBakedDomain}" = {
+      #####
+      # Debugging stuff here...
+      extraConfig = ''
+        # @ini_set( 'display_errors', 1 );
+        @ini_set('memory_limit', '256M');
+      '';
+      #####
+
       database = {
         createLocally = true;
         name = "wp_freshlybaked";
@@ -238,6 +321,7 @@ in {
         inherit (wpp.plugins)
           antispam-bee
           async-javascript
+          # civicrm
           # code-syntax-block
           disable-xml-rpc
           lightbox-photoswipe
@@ -255,20 +339,35 @@ in {
         inherit (wpp.plugins)
           ##########
           # Manually added items...
+          blog2social
+
+          # Site editing
           elementor
+          elementor-pro
+          essential-addons-for-elementor-lite
+          fullwidth-templates
+          header-footer-elementor
+          kadence-blocks
+          unlimited-elements-for-elementor
 
           # Compliance
           age-gate  # TODO(Dave): Push this upstream.  # TODO(Dave): What do you mean "upstream" here?
 
           # Site Backups
-          all-in-one-wp-migration
-          backup-backup
           duplicator
-          updraftplus
+
+          # Data collection
+          optinmonster
+          wpforms-lite
         ;
       };
 
-      themes = { inherit (wpp.themes) twentytwentytwo twentytwentythree; };
+      themes = {
+        inherit (wpp.themes)
+          kadence
+          twentytwentytwo
+          twentytwentythree;
+      };
     };
 
     webserver = "nginx";
@@ -278,7 +377,6 @@ in {
     serviceConfig = {
       Type = "oneshot";
       TimeoutSec = 60;
-      # ExecStart = ''${pkgs.apprise}/bin/apprise -v -t \"System starting up\" -b \"FYI: System (${hostname}) is starting up\" 'json://ntfy.sh/?+X-Priority=high&:topic=vd420__notify_01' '';
       RemainAfterExit = "yes";
     };
 
