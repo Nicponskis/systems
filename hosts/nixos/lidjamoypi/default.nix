@@ -56,6 +56,7 @@ in {
       # Local stuff.  Should be migrated to a shared location i guess.
       ./dwarffs.nix
       ./iptables_exporter.nix
+      ./registry.nix
     ];
 
   boot = {
