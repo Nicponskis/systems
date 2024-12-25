@@ -419,7 +419,7 @@ in {
     defaults = {
       email = "dave.nicponski+acme.certs@gmail.com";
       # `nginx` needs to be able to access these certs!
-      group = config.users.users.nginx.group;
+      group = (config.users.users.nginx or config.users.users.dave).group;
     };
   };
 
@@ -450,7 +450,8 @@ in {
 
   # List services that you want to enable:
   services.bind = {
-    enable = true;
+    # enable = true;
+    enable = false;
     extraConfig = ''
       include "/var/lib/secrets/dnskeys.conf";
     '';
@@ -517,7 +518,8 @@ in {
   services.fake-hwclock.enable = true;
 
   services.grafana = {
-    enable = true;
+    # enable = true;
+    enable = false;
     # Get EIC (KiB, MiB, etc) units axis bugfix!
     package = inputs.latest.legacyPackages.${pkgs.system}.grafana;
     settings.server = {
@@ -545,7 +547,8 @@ in {
   # networking.firewall.allowedUDPPorts = [ 1900 7359 ];
 
   services.nginx = {
-    enable = true;
+    # enable = true;
+    enable = false;
     recommendedGzipSettings = true;
     recommendedOptimisation = true;
     recommendedProxySettings = true;
@@ -662,7 +665,8 @@ in {
   };
 
   services.prometheus = {
-    enable = true;
+    # enable = true;
+    enable = false;
     enableReload = true;
     exporters = {
       node = {
@@ -837,7 +841,8 @@ in {
     windowManager."2bwm".enable = true;
   };
   services.fractalart = {  # Goes w/ xserver, hence not alphabetized
-    enable = true;
+    # enable = true;
+    enable = false;
     width = 1280;
     height = 720;
   };
